@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand tokens land here in Phase 2. Mobile-first, low-bandwidth —
+     no heavy font imports. */
+}

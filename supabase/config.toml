@@ -1,0 +1,11 @@
+project_id = "choice-os"
+
+[api]
+enabled = true
+port = 54321
+
+[db]
+port = 54322
+
+[realtime]
+enabled = true
