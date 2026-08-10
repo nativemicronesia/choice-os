@@ -12,7 +12,7 @@ export function CategoryTabs({
   onSelect: (category: string) => void;
 }) {
   return (
-    <div className="sticky top-[78px] z-10 -mx-4 flex gap-2 overflow-x-auto bg-sand-50/90 px-4 py-3 backdrop-blur">
+    <div className="sticky top-14 z-10 -mx-4 flex gap-2 overflow-x-auto bg-sand-50/90 px-4 py-3 backdrop-blur">
       {categories.map((category) => (
         <button
           key={category}
