@@ -1,6 +1,51 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  /* Ocean — primary brand blue (header, structural surfaces, links) */
+  --color-ocean-950: #0b2a3b;
+  --color-ocean-900: #123b52;
+  --color-ocean-800: #17506e;
+  --color-ocean-700: #1d6685;
+  --color-ocean-600: #2680a3;
+  --color-ocean-500: #3b9cc0;
+  --color-ocean-100: #dceef4;
+  --color-ocean-50: #f0f8fb;
+
+  /* Sunset — the one CTA/accent color (Add button, prices, badges) */
+  --color-sunset-700: #a8460b;
+  --color-sunset-600: #c2530e;
+  --color-sunset-500: #e2701a;
+  --color-sunset-400: #f0924b;
+  --color-sunset-300: #f7b27e;
+  --color-sunset-100: #fde7d2;
+  --color-sunset-50: #fff4e9;
+
+  /* Palm — natural green, availability/success only */
+  --color-palm-700: #2f5233;
+  --color-palm-600: #3d6b41;
+  --color-palm-500: #4c8551;
+  --color-palm-100: #dcebdd;
+  --color-palm-50: #f1f7f1;
+
+  /* Sand — warm neutral surfaces (replaces bg-white / bg-neutral-50/100) */
+  --color-sand-300: #d8c9ac;
+  --color-sand-200: #e9dfcc;
+  --color-sand-100: #f4eee3;
+  --color-sand-50: #fbf8f3;
+
+  /* Ink — warm neutral text (replaces text-neutral-900/500/400) */
+  --color-ink-900: #241c14;
+  --color-ink-700: #4a4038;
+  --color-ink-500: #7a6f62;
+  --color-ink-300: #b4a996;
+
+  --shadow-card: 0 1px 2px rgba(36, 28, 20, 0.05), 0 10px 28px -10px rgba(18, 59, 82, 0.22);
+  --radius-card: 1.25rem;
+}
+
 :root {
-  /* Brand tokens land here in Phase 2. Mobile-first, low-bandwidth —
-     no heavy font imports. */
+  color-scheme: light;
 }

@@ -40,14 +40,14 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-ink-700">
           Toggle what customers can order online today. Add new platters when the lineup
           changes.
         </p>
         <button
           type="button"
           onClick={() => setEditingId("new")}
-          className="shrink-0 rounded-lg bg-neutral-900 px-3 py-2 text-sm font-semibold text-white"
+          className="shrink-0 rounded-lg bg-ocean-700 px-3 py-2 text-sm font-semibold text-white"
         >
           Add dish
         </button>
@@ -58,13 +58,13 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
       ) : null}
 
       {items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-neutral-300 p-6 text-center text-sm text-neutral-500">
+        <p className="rounded-xl border border-dashed border-sand-300 p-6 text-center text-sm text-ink-500">
           No dishes yet. Add today&apos;s platters to open the online board.
         </p>
       ) : (
         Object.entries(byCategory).map(([category, categoryItems]) => (
           <div key={category}>
-            <h2 className="text-sm font-semibold text-neutral-500">{category}</h2>
+            <h2 className="text-sm font-semibold text-ink-500">{category}</h2>
             <div className="mt-2 flex flex-col gap-2">
               {categoryItems.map((item) =>
                 editingId === item.id ? (
@@ -77,11 +77,11 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
                 ) : (
                   <div
                     key={item.id}
-                    className="flex flex-col gap-2 rounded-xl border border-neutral-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-2 rounded-xl border border-sand-200 p-3 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-xs text-neutral-500">
+                      <p className="font-medium text-ink-900">{item.name}</p>
+                      <p className="text-xs text-ink-500">
                         ${item.price.toFixed(2)}
                         {item.is_available ? " · on today's board" : " · hidden online"}
                       </p>
@@ -95,14 +95,14 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
                       <button
                         type="button"
                         onClick={() => setEditingId(item.id)}
-                        className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-xs font-semibold"
+                        className="rounded-lg border border-sand-300 px-2.5 py-1.5 text-xs font-semibold text-ink-700"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(item)}
-                        className="rounded-lg border border-neutral-300 px-2.5 py-1.5 text-xs font-semibold text-red-700"
+                        className="rounded-lg border border-sand-300 px-2.5 py-1.5 text-xs font-semibold text-red-700"
                       >
                         Remove
                       </button>

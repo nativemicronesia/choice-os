@@ -54,21 +54,21 @@ export function CheckoutForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="text-sm font-medium">
+      <label className="text-sm font-medium text-ink-900">
         Name for your order
         <input
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="e.g. Mary"
           required
-          className="mt-1 w-full rounded-lg border border-neutral-300 px-3 py-2"
+          className="mt-1 w-full rounded-lg border border-sand-300 px-3 py-2 text-ink-900 focus:border-ocean-500 focus:outline-none focus:ring-1 focus:ring-ocean-500"
         />
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         type="submit"
         disabled={submitting || items.length === 0}
-        className="rounded-lg bg-neutral-900 py-2.5 text-center font-semibold text-white disabled:bg-neutral-300"
+        className="rounded-lg bg-sunset-500 py-2.5 text-center font-semibold text-white disabled:bg-sand-300"
       >
         {submitting ? "Placing order…" : `Place order · $${subtotal.toFixed(2)}`}
       </button>

@@ -12,7 +12,7 @@ export function CategoryTabs({
   onSelect: (category: string) => void;
 }) {
   return (
-    <div className="sticky top-14 z-10 -mx-4 flex gap-2 overflow-x-auto bg-white/90 px-4 py-3 backdrop-blur">
+    <div className="sticky top-[78px] z-10 -mx-4 flex gap-2 overflow-x-auto bg-sand-50/90 px-4 py-3 backdrop-blur">
       {categories.map((category) => (
         <button
           key={category}
@@ -20,7 +20,9 @@ export function CategoryTabs({
           onClick={() => onSelect(category)}
           className={cn(
             "shrink-0 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap",
-            selected === category ? "bg-neutral-900 text-white" : "bg-neutral-100 text-neutral-700",
+            selected === category
+              ? "bg-ocean-700 text-white shadow-[var(--shadow-card)]"
+              : "bg-sand-100 text-ink-700",
           )}
         >
           {category}

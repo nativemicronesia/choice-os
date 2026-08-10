@@ -21,7 +21,7 @@ export function MenuBrowser({ items }: { items: MenuItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="mt-6 rounded-xl border border-dashed border-neutral-300 py-10 text-center text-sm text-neutral-500">
+      <p className="mt-6 rounded-2xl border border-dashed border-sand-300 py-10 text-center text-sm text-ink-500">
         Nothing on today&apos;s board yet. Check back soon, or visit the shop to walk in.
       </p>
     );
@@ -39,7 +39,7 @@ export function MenuBrowser({ items }: { items: MenuItem[] }) {
           <ItemCard key={item.id} item={item} />
         ))}
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-neutral-400">Nothing in this category today.</p>
+          <p className="py-8 text-center text-ink-300">Nothing in this category today.</p>
         )}
       </div>
     </div>

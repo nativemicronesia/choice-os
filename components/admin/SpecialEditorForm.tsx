@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { upsertDailySpecial } from "@/lib/actions/specials";
+import { deleteDailySpecialPhoto, uploadDailySpecialPhoto, upsertDailySpecial } from "@/lib/actions/specials";
+import { PhotoUploadField } from "@/components/shared/PhotoUploadField";
 import type { DailySpecial } from "@/lib/types/database";
 
 export function SpecialEditorForm({
@@ -17,7 +18,9 @@ export function SpecialEditorForm({
   const [description, setDescription] = useState(initial?.description ?? "");
   const [price, setPrice] = useState(initial ? String(initial.price) : "");
   const [active, setActive] = useState(initial?.active ?? true);
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.image_url ?? null);
   const [submitting, setSubmitting] = useState(false);
+  const [uploadBusy, setUploadBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent) {
@@ -36,6 +39,7 @@ export function SpecialEditorForm({
       description: description.trim() || null,
       price: parsedPrice,
       active,
+      image_url: imageUrl,
     });
 
     if (!result.success) {
@@ -44,25 +48,33 @@ export function SpecialEditorForm({
       return;
     }
 
-    onSaved({ id: result.id, title: title.trim(), description: description.trim() || null, price: parsedPrice, active, created_at: initial?.created_at ?? new Date().toISOString() });
+    onSaved({
+      id: result.id,
+      title: title.trim(),
+      description: description.trim() || null,
+      price: parsedPrice,
+      active,
+      image_url: imageUrl,
+      created_at: initial?.created_at ?? new Date().toISOString(),
+    });
     setSubmitting(false);
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 rounded-lg border border-neutral-200 p-3">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2 rounded-lg border border-sand-200 p-3">
       <input
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Title"
         required
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
       />
       <textarea
         value={description}
         onChange={(event) => setDescription(event.target.value)}
         placeholder="Description (optional)"
         rows={2}
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
       />
       <input
         value={price}
@@ -70,9 +82,17 @@ export function SpecialEditorForm({
         placeholder="Price"
         inputMode="decimal"
         required
-        className="rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
       />
-      <label className="flex items-center gap-2 text-sm">
+      <PhotoUploadField
+        label="Special photo"
+        value={imageUrl}
+        onChange={setImageUrl}
+        uploadAction={uploadDailySpecialPhoto}
+        deleteAction={deleteDailySpecialPhoto}
+        onBusyChange={setUploadBusy}
+      />
+      <label className="flex items-center gap-2 text-sm text-ink-900">
         <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
         Active (visible to customers)
       </label>
@@ -80,12 +100,12 @@ export function SpecialEditorForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          disabled={submitting}
-          className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-semibold text-white disabled:bg-neutral-300"
+          disabled={submitting || uploadBusy}
+          className="rounded-lg bg-ocean-700 px-4 py-2 text-sm font-semibold text-white disabled:bg-sand-300"
         >
           {submitting ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm text-neutral-500">
+        <button type="button" onClick={onCancel} className="rounded-lg px-4 py-2 text-sm text-ink-500">
           Cancel
         </button>
       </div>

@@ -17,6 +17,7 @@ export type DailySpecial = {
   description: string | null;
   price: number;
   active: boolean;
+  image_url: string | null;
   created_at: string;
 };
 

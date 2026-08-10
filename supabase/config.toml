@@ -9,3 +9,7 @@ port = 54322
 
 [realtime]
 enabled = true
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
