@@ -25,9 +25,12 @@
 - `orders.status` transitions: `pending -> cooking -> ready -> completed` only,
   enforced by the CHECK constraint. Any new status value needs a migration.
 - Realtime: `orders` remains in the `supabase_realtime` publication, but
-  browser clients must never subscribe directly to order row changes. Current
-  KDS, owner analytics, and customer tracking
-  refresh through session/capability-checked server actions every 2.5–5 seconds.
+  browser clients must never subscribe directly to order row changes. KDS and
+  owner analytics use private Broadcast topics disclosed only after the owner
+  session check; customer tracking uses the order's high-entropy capability
+  hash. Channel-join RLS validates each topic, and Broadcast payloads contain
+  only order IDs/statuses or status timestamps. Server actions provide snapshots
+  and a 30-second fallback.
 - Category values on `menu_items` are free text, not an enum — must match the
   UI's filter tabs exactly: 'Local Specials', 'Burgers & Sandwiches', 'Sides',
   'Cold Drinks'. Changing a tab label requires a data migration.

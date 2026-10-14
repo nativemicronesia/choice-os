@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { refreshTrackedOrder } from "@/lib/actions/private-orders";
+import { createClient } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils/cn";
 import type { OrderStatus, OrderWithItems } from "@/lib/types/database";
@@ -14,7 +15,13 @@ const STEP_LABELS: Record<OrderStatus, string> = {
   completed: "Picked up",
 };
 
-export function OrderStatusTracker({ initialOrder }: { initialOrder: OrderWithItems }) {
+export function OrderStatusTracker({
+  initialOrder,
+  realtimeTopic,
+}: {
+  initialOrder: OrderWithItems;
+  realtimeTopic: string;
+}) {
   const [order, setOrder] = useState(initialOrder);
 
   useEffect(() => {
@@ -29,12 +36,23 @@ export function OrderStatusTracker({ initialOrder }: { initialOrder: OrderWithIt
         // Keep the last known status while the customer is offline.
       }
     };
-    const interval = window.setInterval(refresh, 2500);
+    const supabase = createClient();
+    const channel = supabase
+      .channel(realtimeTopic, { config: { private: true } })
+      .on("broadcast", { event: "choice_order_status" }, ({ payload }) => {
+        const next = payload as { status?: OrderStatus; updated_at?: string };
+        if (!next.status || !STEPS.includes(next.status) || !next.updated_at) return;
+        setOrder((prev) => ({ ...prev, status: next.status!, updated_at: next.updated_at! }));
+      })
+      .subscribe();
+    // Keep tracking resilient if a mobile connection drops its WebSocket.
+    const interval = window.setInterval(refresh, 30_000);
     return () => {
       active = false;
       window.clearInterval(interval);
+      void supabase.removeChannel(channel);
     };
-  }, [initialOrder.id]);
+  }, [initialOrder.id, realtimeTopic]);
 
   const currentIndex = STEPS.indexOf(order.status);
 

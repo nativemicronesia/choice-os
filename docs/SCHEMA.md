@@ -14,3 +14,8 @@ tracking-token hash to orders and a service-role-only `place_pickup_order`
 function. That function snapshots current available menu prices and inserts
 the order and its items atomically. It also removes public order and order-item
 read/write access; tracking and owner reads now go through server-side checks.
+
+The follow-up `20261014150948_secure_order_realtime.sql` adds private Broadcast
+topics and an RLS join check on `realtime.messages`. Only the kitchen's
+server-disclosed topic and a customer's order-token-derived topic can join;
+messages carry no names or order-item details.

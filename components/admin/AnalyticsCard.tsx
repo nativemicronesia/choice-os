@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getOwnerDayOrders } from "@/lib/actions/private-orders";
+import { getOwnerDayOrders, getOwnerKitchenRealtimeTopic } from "@/lib/actions/private-orders";
+import { createClient } from "@/lib/supabase/client";
 import type { Order } from "@/lib/types/database";
 
 export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
@@ -17,10 +18,24 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
         // Keep the last known totals when temporarily offline.
       }
     };
-    const interval = window.setInterval(refresh, 5000);
+    const supabase = createClient();
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    void getOwnerKitchenRealtimeTopic().then((topic) => {
+      if (!active) return;
+      channel = supabase
+        .channel(topic, { config: { private: true } })
+        .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") void refresh();
+        });
+    }).catch(() => {
+      // Keep the periodic owner-checked refresh as a fallback.
+    });
+    const interval = window.setInterval(refresh, 30_000);
     return () => {
       active = false;
       window.clearInterval(interval);
+      if (channel) void supabase.removeChannel(channel);
     };
   }, []);
 

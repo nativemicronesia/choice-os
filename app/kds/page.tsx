@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getOwnerActiveTickets, getOwnerTicket } from "@/lib/actions/private-orders";
+import {
+  getOwnerActiveTickets,
+  getOwnerKitchenRealtimeTopic,
+  getOwnerTicket,
+} from "@/lib/actions/private-orders";
+import { createClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { updateOrderStatus } from "@/lib/actions/orders";
 import { TicketBoard, type Ticket } from "@/components/kds/TicketBoard";
 import { SoundUnlockOverlay } from "@/components/kds/SoundUnlockOverlay";
@@ -47,11 +53,26 @@ export default function KdsPage() {
     };
 
     void refresh();
-    const interval = window.setInterval(refresh, 2500);
+    let supabase: ReturnType<typeof createClient> | null = null;
+    let channel: RealtimeChannel | null = null;
+    void getOwnerKitchenRealtimeTopic().then((topic) => {
+      if (cancelled) return;
+      supabase = createClient();
+      channel = supabase
+        .channel(topic, { config: { private: true } })
+        .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED") void refresh();
+        });
+    }).catch(() => {
+      // The periodic owner-checked refresh remains available if Realtime is down.
+    });
+    const interval = window.setInterval(refresh, 30_000);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+      if (supabase && channel) void supabase.removeChannel(channel);
     };
   }, []);
 

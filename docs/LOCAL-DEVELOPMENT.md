@@ -63,10 +63,14 @@ npm run db:stop
 - Owner order/menu reads and all owner mutations require the existing owner
   session before the server uses the service-role client.
 - Direct browser `postgres_changes` subscriptions to orders have been removed.
-  KDS and the owner day card refresh through owner-checked server actions; the
-  customer tracker refreshes through its scoped capability every 2.5–5 seconds.
-  The existing publication remains in the schema for a future authorized
-  realtime relay.
+  KDS and the owner day card use a private Broadcast topic disclosed by an
+  owner-checked server action. The customer's topic is derived from the stored
+  tracking-token hash. RLS on `realtime.messages` accepts only those current
+  topic capabilities. Broadcasts contain order IDs/statuses for the kitchen or
+  status/timestamp for one customer; private names and line items stay behind
+  server-side reads. Server actions refresh snapshots and fall back to a
+  30-second refresh if the WebSocket drops. The existing publication stays in
+  place but browser clients do not subscribe to its row changes.
 
 The current environment is an Intel Mac on macOS Monterey. Supabase's native
 local runtime is not supported there, so a container runtime is required. The

@@ -8,12 +8,12 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = await getTrackedOrder(id);
-  if (!order) notFound();
+  const tracked = await getTrackedOrder(id);
+  if (!tracked) notFound();
 
   return (
     <main className="mx-auto max-w-2xl px-4 pb-24 pt-6">
-      <OrderStatusTracker initialOrder={order} />
+      <OrderStatusTracker initialOrder={tracked.order} realtimeTopic={tracked.realtimeTopic} />
     </main>
   );
 }

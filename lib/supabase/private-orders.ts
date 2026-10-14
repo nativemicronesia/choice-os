@@ -7,6 +7,7 @@ import type { Order, OrderItem, OrderWithItems } from "@/lib/types/database";
 
 const TRACKING_COOKIE = "choice_order_access";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export type TrackedOrder = { order: OrderWithItems; realtimeTopic: string };
 
 function orderFromRow(row: OrderWithItems): OrderWithItems {
   return {
@@ -19,7 +20,7 @@ function orderFromRow(row: OrderWithItems): OrderWithItems {
   };
 }
 
-export async function getTrackedOrder(id: string): Promise<OrderWithItems | null> {
+export async function getTrackedOrder(id: string): Promise<TrackedOrder | null> {
   if (!UUID.test(id)) return null;
   const token = (await cookies()).get(TRACKING_COOKIE)?.value;
   if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
@@ -33,7 +34,14 @@ export async function getTrackedOrder(id: string): Promise<OrderWithItems | null
     .maybeSingle();
 
   if (error) throw error;
-  return data ? orderFromRow(data as OrderWithItems) : null;
+  if (!data) return null;
+  const { tracking_token_hash: trackingTokenHash, ...row } = data as OrderWithItems & {
+    tracking_token_hash: string;
+  };
+  return {
+    order: orderFromRow(row),
+    realtimeTopic: `choice-order:${trackingTokenHash}`,
+  };
 }
 
 export async function getTrackedOrderStatus(id: string): Promise<Pick<Order, "status" | "updated_at"> | null> {
@@ -105,6 +113,16 @@ export async function getOwnerDailySpecials() {
     ...row,
     price: Number(row.price),
   }));
+}
+
+export async function getOwnerKitchenTopic(): Promise<string> {
+  const { data, error } = await createAdminClient()
+    .from("order_realtime_settings")
+    .select("topic_token")
+    .eq("name", "kds")
+    .single();
+  if (error) throw error;
+  return `choice-kds:${data.topic_token}`;
 }
 
 export type OwnerOrderSnapshot = { orders: Order[]; active: OrderWithItems[] };

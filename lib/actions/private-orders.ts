@@ -4,6 +4,7 @@ import { requireOwnerSession } from "@/lib/auth/require";
 import {
   getOwnerActiveOrders,
   getOwnerDailySpecials,
+  getOwnerKitchenTopic,
   getOwnerMenuItems,
   getOwnerOrderWithItems,
   getOwnerTodaysOrders,
@@ -34,6 +35,11 @@ export async function getOwnerDayOrders() {
 export async function getOwnerActiveTickets() {
   await requireOwnerSession();
   return getOwnerActiveOrders();
+}
+
+export async function getOwnerKitchenRealtimeTopic() {
+  await requireOwnerSession();
+  return getOwnerKitchenTopic();
 }
 
 export async function getOwnerTicket(id: string) {
