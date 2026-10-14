@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/CartContext";
 
-export function CheckoutForm() {
+export function CheckoutForm({ onCancel, onOrderPlaced }: { onCancel: () => void; onOrderPlaced: () => void }) {
   const { items, subtotal, clearCart } = useCart();
   const router = useRouter();
   const [name, setName] = useState("");
@@ -46,6 +46,7 @@ export function CheckoutForm() {
     }
 
     clearCart();
+    onOrderPlaced();
     router.push(`/order/${result.orderId}`);
   }
 
@@ -58,16 +59,24 @@ export function CheckoutForm() {
           onChange={(event) => setName(event.target.value)}
           placeholder="e.g. Mary"
           required
-          className="mt-1 w-full rounded-lg border border-sand-300 px-3 py-2 text-ink-900 focus:border-ocean-500 focus:outline-none focus:ring-1 focus:ring-ocean-500"
+          className="mt-1 min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-ink-900 focus:border-ocean-500 focus:outline-none focus:ring-1 focus:ring-ocean-500"
         />
       </label>
-      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" aria-live="assertive" className="text-sm text-red-700">{error}</p>}
       <button
         type="submit"
         disabled={submitting || items.length === 0}
-        className="rounded-lg bg-sunset-500 py-2.5 text-center font-semibold text-white disabled:bg-sand-300"
+        className="min-h-11 rounded-lg bg-sunset-500 py-2.5 text-center font-semibold text-white disabled:bg-sand-300"
       >
         {submitting ? "Placing order…" : `Place order · $${subtotal.toFixed(2)}`}
+      </button>
+      <button
+        type="button"
+        onClick={onCancel}
+        disabled={submitting}
+        className="min-h-11 rounded-lg border border-sand-300 py-2.5 text-center text-sm font-semibold text-ink-700 disabled:opacity-60"
+      >
+        Back to cart
       </button>
     </form>
   );

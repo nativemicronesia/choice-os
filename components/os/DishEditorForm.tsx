@@ -69,7 +69,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           required
-          className="w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+          className="min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -81,7 +81,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
             id="dish-category"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+            className="min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -102,7 +102,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
-            className="w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+            className="min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
           />
         </div>
       </div>
@@ -115,7 +115,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={2}
-          className="w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+          className="min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
         />
       </div>
       <PhotoUploadField
@@ -129,6 +129,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
       <label className="flex items-center gap-2 text-sm text-ink-900">
         <input
           type="checkbox"
+          className="h-5 w-5"
           checked={isAvailable}
           onChange={(e) => setIsAvailable(e.target.checked)}
         />
@@ -139,14 +140,14 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
         <button
           type="submit"
           disabled={pending || uploadBusy}
-          className="rounded-lg bg-ocean-700 px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="min-h-11 rounded-lg bg-ocean-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           {pending ? "Saving…" : "Save dish"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-sand-300 px-3 py-2 text-sm font-medium text-ink-700"
+          className="min-h-11 rounded-lg border border-sand-300 px-4 py-2 text-sm font-medium text-ink-700"
         >
           Cancel
         </button>

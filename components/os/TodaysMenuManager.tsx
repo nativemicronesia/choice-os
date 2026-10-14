@@ -64,7 +64,7 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
         <button
           type="button"
           onClick={() => setEditingId("new")}
-          className="shrink-0 rounded-lg bg-ocean-700 px-3 py-2 text-sm font-semibold text-white"
+          className="min-h-11 shrink-0 rounded-lg bg-ocean-700 px-3 py-2 text-sm font-semibold text-white"
         >
           Add dish
         </button>
@@ -113,14 +113,14 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
                       <button
                         type="button"
                         onClick={() => setEditingId(item.id)}
-                        className="rounded-lg border border-sand-300 px-2.5 py-1.5 text-xs font-semibold text-ink-700"
+                        className="min-h-11 rounded-lg border border-sand-300 px-3 py-2 text-xs font-semibold text-ink-700"
                       >
                         Edit
                       </button>
                       <button
                         type="button"
                         onClick={() => handleDelete(item)}
-                        className="rounded-lg border border-sand-300 px-2.5 py-1.5 text-xs font-semibold text-red-700"
+                        className="min-h-11 rounded-lg border border-sand-300 px-3 py-2 text-xs font-semibold text-red-700"
                       >
                         Remove
                       </button>

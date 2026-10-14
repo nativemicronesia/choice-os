@@ -75,12 +75,12 @@ export function PhotoUploadField({
             type="button"
             disabled={isBusy}
             onClick={() => inputRef.current?.click()}
-            className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm font-medium text-ink-700 disabled:opacity-60"
+            className="min-h-11 rounded-lg border border-sand-300 px-3 py-2 text-sm font-medium text-ink-700 disabled:opacity-60"
           >
             {isBusy ? (status === "compressing" ? "Preparing…" : "Uploading…") : preview ? "Change photo" : "Add photo"}
           </button>
           {preview && !isBusy && (
-            <button type="button" onClick={handleRemove} className="text-sm text-ink-500 underline">
+            <button type="button" onClick={handleRemove} className="min-h-11 px-2 text-left text-sm font-medium text-ink-700 underline underline-offset-2">
               Remove
             </button>
           )}
@@ -98,7 +98,7 @@ export function PhotoUploadField({
           }}
         />
       </div>
-      {error && <p className="mt-1 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="mt-1 text-sm text-red-700">{error}</p>}
     </div>
   );
 }

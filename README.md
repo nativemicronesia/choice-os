@@ -23,11 +23,11 @@ not verify Supabase migrations, RLS, storage, or Realtime delivery.
 ```bash
 cd /Users/dave/NMH/choice-os
 cp .env.example .env.local
-# Set CHOICE_DATA_MODE and NEXT_PUBLIC_CHOICE_DATA_MODE to `fixtures`.
-# Set SESSION_SECRET (at least 16 random characters) and OWNER_EMAIL.
+# Fixture mode and owner@example.test are prefilled; leave Supabase values empty.
+# Set SESSION_SECRET to a random value of at least 16 characters.
 npm run hash-password -- 'choose-a-password'
 # Paste the generated hash into OWNER_PASSWORD_HASH.
-npm run dev
+CHOICE_DATA_MODE=fixtures NEXT_PUBLIC_CHOICE_DATA_MODE=fixtures npm run dev
 ```
 
 Fixture mode requires no Supabase credentials or database service. Orders and
@@ -40,6 +40,10 @@ Dev: `npm run dev` (port 3003).
 - Storefront: http://localhost:3003
 - Owner login: http://localhost:3003/login
 - OS menu: http://localhost:3003/os/menu
+
+Sign in with `owner@example.test` and the development password used to generate
+the local hash. Never reuse production credentials; keep `.env.local` out of
+commits.
 
 ## Docs
 

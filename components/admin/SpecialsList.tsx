@@ -46,18 +46,18 @@ export function SpecialsList({ specials: initialSpecials }: { specials: DailySpe
             onCancel={() => setEditingId(null)}
           />
         ) : (
-          <div key={special.id} className="flex items-center justify-between rounded-lg border border-sand-200 p-3">
-            <div>
-              <p className="font-medium text-ink-900">{special.title}</p>
+          <div key={special.id} className="flex flex-col gap-3 rounded-lg border border-sand-200 p-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="break-words font-medium text-ink-900">{special.title}</p>
               <p className="text-xs text-ink-500">
                 ${special.price.toFixed(2)} · {formatSpecialSchedule(special)}
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 sm:justify-end">
               <button
                 type="button"
                 onClick={() => setEditingId(special.id)}
-                className="text-sm text-ink-500 underline"
+                className="min-h-11 rounded-lg px-3 text-sm font-medium text-ink-700 underline underline-offset-2"
               >
                 Edit
               </button>
@@ -77,7 +77,7 @@ export function SpecialsList({ specials: initialSpecials }: { specials: DailySpe
         <button
           type="button"
           onClick={() => setEditingId("new")}
-          className="rounded-lg border border-dashed border-sand-300 py-2 text-sm font-medium text-ink-500"
+          className="min-h-11 rounded-lg border border-dashed border-sand-300 py-2 text-sm font-medium text-ink-700"
         >
           + Add special
         </button>

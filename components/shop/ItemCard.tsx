@@ -40,7 +40,7 @@ export function ItemCard({ item }: { item: MenuItem }) {
                 imageUrl: item.image_url,
               })
             }
-            className="rounded-full bg-sunset-500 px-4 py-1.5 text-sm font-medium text-white shadow disabled:cursor-not-allowed disabled:bg-sand-300 disabled:shadow-none"
+            className="min-h-11 rounded-full bg-sunset-500 px-4 py-2 text-sm font-medium text-white shadow disabled:cursor-not-allowed disabled:bg-sand-300 disabled:shadow-none"
           >
             Add
           </button>

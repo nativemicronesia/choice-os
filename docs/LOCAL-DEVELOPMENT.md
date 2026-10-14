@@ -29,6 +29,28 @@ Generate a development-only owner password hash with `npm run hash-password --
 place in fixture mode. Do not reuse production credentials. No Supabase URL,
 key, project, account, or database is needed.
 
+For a repeatable local-only setup, set the two fixture mode values and site URL
+above, use `owner@example.test` as the local owner email, choose a development
+password, and generate its hash with:
+
+```bash
+npm run hash-password -- 'your-development-password'
+```
+
+Paste that command's hash into `OWNER_PASSWORD_HASH`. Set `SESSION_SECRET` to a
+random value of at least 16 characters (for example, generate one locally with
+`openssl rand -hex 24`). Keep `.env.local` private and out of commits. Start
+only fixture mode with:
+
+```bash
+CHOICE_DATA_MODE=fixtures NEXT_PUBLIC_CHOICE_DATA_MODE=fixtures npm run dev
+```
+
+Open `http://localhost:3003` for the storefront and
+`http://localhost:3003/login` to sign in using `owner@example.test` and the
+development password you chose. The owner navigation links to Today&apos;s menu,
+Kitchen, and Day; sign out returns protected routes to the login screen.
+
 Open `http://localhost:3003` to browse the menu and scheduled specials, add food
 and quantities to the cart, add optional item instructions, submit a cash pickup
 order, and follow its private
@@ -70,6 +92,7 @@ to NWA and must not be used as Choice's data source. No live database was querie
 or modified for fixture development. Database connection, migration application,
 RLS behavior, and real-time delivery remain unverified here.
 
-NMH's established browser-control MCP is unavailable to this Codex session, so
-this change should be visually checked in the visible browser route when it is
-available. Do not substitute a new automation/control route.
+NMH's established browser-control MCP is unavailable to this Codex session.
+Chrome opened the local storefront, but desktop capture was unavailable, so
+visual click-through and phone/tablet viewport checks remain for a session with
+a usable visible browser. No substitute browser automation was introduced.

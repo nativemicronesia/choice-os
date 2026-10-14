@@ -27,6 +27,7 @@ export default function KdsPage() {
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(() => new Set());
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
+  const [soundError, setSoundError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -120,21 +121,21 @@ export default function KdsPage() {
 
   function unlockSound() {
     const audio = audioRef.current;
-    if (audio) {
-      audio
-        .play()
-        .then(() => {
-          audio.pause();
-          audio.currentTime = 0;
-        })
-        .catch(() => {});
-    }
-    setSoundUnlocked(true);
+    if (!audio) return;
+    setSoundError(null);
+    audio
+      .play()
+      .then(() => {
+        audio.pause();
+        audio.currentTime = 0;
+        setSoundUnlocked(true);
+      })
+      .catch(() => setSoundError("Chime could not be enabled. The ticket board will keep refreshing."));
   }
 
   return (
     <OsShell title="Kitchen" subtitle="Advance tickets as food moves" active="kitchen">
-      {!soundUnlocked && <SoundUnlockOverlay onUnlock={unlockSound} />}
+      {!soundUnlocked && <SoundUnlockOverlay onUnlock={unlockSound} error={soundError} />}
       {updateError ? <p role="alert" className="mb-3 text-sm text-red-700">{updateError}</p> : null}
       {refreshError ? <p role="status" className="mb-3 text-sm text-amber-800">{refreshError}</p> : null}
       {!ticketsLoaded ? <p role="status" className="mb-3 text-sm text-neutral-500">Loading kitchen tickets…</p> : null}

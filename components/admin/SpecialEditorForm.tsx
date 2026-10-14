@@ -93,7 +93,7 @@ export function SpecialEditorForm({
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           rows={2}
-          className="rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+          className="min-h-11 rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
         />
       </label>
       <label htmlFor="special-price" className="flex flex-col gap-1 text-sm text-ink-700">
@@ -119,7 +119,7 @@ export function SpecialEditorForm({
             setFrequency(next);
             if (next === "weekly" && weekdays.length === 0) setWeekdays([5]);
           }}
-          className="rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
+          className="min-h-11 rounded-lg border border-sand-300 px-3 py-2 text-sm text-ink-900"
         >
           <option value="daily">Every day</option>
           <option value="weekly">Weekly on selected days</option>
@@ -130,9 +130,10 @@ export function SpecialEditorForm({
           <legend className="px-1 text-xs font-medium text-ink-500">Show this special on</legend>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {WEEKDAYS.map((day) => (
-              <label key={day.value} className="flex items-center gap-2 text-sm text-ink-700">
+              <label key={day.value} className="flex min-h-11 items-center gap-2 text-sm text-ink-700">
                 <input
                   type="checkbox"
+                  className="h-5 w-5"
                   checked={weekdays.includes(day.value)}
                   onChange={(event) => setWeekdays((current) => event.target.checked
                     ? [...current, day.value]
@@ -152,8 +153,8 @@ export function SpecialEditorForm({
         deleteAction={deleteDailySpecialPhoto}
         onBusyChange={setUploadBusy}
       />
-      <label className="flex items-center gap-2 text-sm text-ink-900">
-        <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
+      <label className="flex min-h-11 items-center gap-2 text-sm text-ink-900">
+        <input className="h-5 w-5" type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />
         Active (visible to customers)
       </label>
       {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
@@ -165,7 +166,7 @@ export function SpecialEditorForm({
         >
           {submitting ? "Saving…" : "Save"}
         </button>
-        <button type="button" onClick={onCancel} className="min-h-11 rounded-lg px-4 py-2 text-sm text-ink-500">
+        <button type="button" onClick={onCancel} className="min-h-11 rounded-lg px-4 py-2 text-sm text-ink-700">
           Cancel
         </button>
       </div>

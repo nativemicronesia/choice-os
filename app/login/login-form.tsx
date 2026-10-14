@@ -66,7 +66,7 @@ export function LoginForm() {
           className="w-full rounded-lg border border-neutral-300 px-3 py-2"
         />
       </div>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p role="alert" aria-live="assertive" className="text-sm text-red-700">{error}</p> : null}
       <button
         type="submit"
         disabled={pending}

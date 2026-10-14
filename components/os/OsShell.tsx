@@ -27,14 +27,14 @@ export function OsShell({
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="rounded-lg border border-sand-300 px-3 py-1.5 text-sm font-medium text-ink-700"
+            className="inline-flex min-h-11 items-center rounded-lg border border-sand-300 px-3 text-sm font-medium text-ink-700"
           >
             Storefront
           </Link>
           <form action="/api/auth/logout" method="post">
             <button
               type="submit"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-sand-300 text-ink-700"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-sand-300 text-ink-700"
               aria-label="Sign out"
               title="Sign out"
             >
@@ -49,7 +49,7 @@ export function OsShell({
           <nav className="flex gap-1 p-3 md:flex-col" aria-label="Owner OS">
             <Link
               href="/os/menu"
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
                 active === "menu" ? "bg-ocean-700 text-white" : "text-ink-700 hover:bg-sand-100"
               }`}
               aria-current={active === "menu" ? "page" : undefined}
@@ -58,7 +58,7 @@ export function OsShell({
             </Link>
             <Link
               href="/kds"
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
                 active === "kitchen" ? "bg-ocean-700 text-white" : "text-ink-700 hover:bg-sand-100"
               }`}
               aria-current={active === "kitchen" ? "page" : undefined}
@@ -67,7 +67,7 @@ export function OsShell({
             </Link>
             <Link
               href="/os/day"
-              className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
                 active === "day" ? "bg-ocean-700 text-white" : "text-ink-700 hover:bg-sand-100"
               }`}
               aria-current={active === "day" ? "page" : undefined}

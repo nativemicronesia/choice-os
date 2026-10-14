@@ -20,7 +20,7 @@ export function CategoryTabs({
           aria-pressed={selected === category}
           onClick={() => onSelect(category)}
           className={cn(
-            "shrink-0 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap",
+            "min-h-11 shrink-0 rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap",
             selected === category
               ? "bg-ocean-700 text-white shadow-[var(--shadow-card)]"
               : "bg-sand-100 text-ink-700",

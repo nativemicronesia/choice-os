@@ -24,7 +24,7 @@ export async function ShopHeader() {
         <span className="font-display text-lg font-semibold text-ink-900">Choice Fast Food</span>
         <Link
           href={session ? "/os/menu" : "/login"}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-sand-200 bg-white text-ink-800"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-sand-200 bg-white text-ink-800"
           aria-label={session ? "Open Choice OS" : "Owner sign in"}
           title={session ? "Choice OS" : "Owner sign in"}
         >
