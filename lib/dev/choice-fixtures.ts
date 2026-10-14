@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import { ALLOWED_TRANSITIONS } from "@/lib/orders/transitions";
+import { chuukWeekday, isSpecialScheduledForWeekday } from "@/lib/specials/schedule";
 import type {
   DailySpecial,
   MenuItem,
@@ -129,15 +130,16 @@ export function fixtureUpsertSpecial(input: Omit<DailySpecial, "created_at">): D
 
 export function fixturePlaceOrder(input: {
   name: string;
-  items: { item_id: string; quantity: number; special_instructions: string | null }[];
+  items: { item_id: string; item_type: "menu" | "special"; quantity: number; special_instructions: string | null }[];
   trackingTokenHash: string;
+  now?: Date;
 }): string {
   const store = state();
   if (!input.name.trim() || input.name.trim().length > 80) throw new Error("Invalid customer name");
   if (input.items.length < 1 || input.items.length > 30) throw new Error("Invalid order lines");
   if (!/^[a-f0-9]{64}$/i.test(input.trackingTokenHash)) throw new Error("Invalid tracking capability");
-  if (new Set(input.items.map((line) => line.item_id)).size !== input.items.length) {
-    throw new Error("Duplicate menu lines are not allowed");
+  if (new Set(input.items.map((line) => `${line.item_type}:${line.item_id}`)).size !== input.items.length) {
+    throw new Error("Duplicate order lines are not allowed");
   }
 
   // Resolve and snapshot every line before mutating state, matching the SQL RPC's
@@ -149,14 +151,21 @@ export function fixturePlaceOrder(input: {
     if (line.special_instructions && line.special_instructions.length > 250) {
       throw new Error("Invalid instructions");
     }
-    const menuItem = store.menu.find((row) => row.id === line.item_id && row.is_available);
-    if (!menuItem) throw new Error("One or more menu items are unavailable");
+    const weekday = chuukWeekday(input.now);
+    const menuItem = line.item_type === "menu"
+      ? store.menu.find((row) => row.id === line.item_id && row.is_available)
+      : undefined;
+    const special = line.item_type === "special"
+      ? store.specials.find((row) => row.id === line.item_id && row.active && isSpecialScheduledForWeekday(row, weekday))
+      : undefined;
+    const product = menuItem ?? special;
+    if (!product) throw new Error("One or more items are unavailable or outside their schedule");
     return {
       id: randomUUID(),
       order_id: "",
-      item_name: menuItem.name,
+      item_name: menuItem ? menuItem.name : (special as DailySpecial).title,
       quantity: line.quantity,
-      price_at_time: menuItem.price,
+      price_at_time: product.price,
       special_instructions: line.special_instructions?.trim() || null,
     } satisfies OrderItem;
   });

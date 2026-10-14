@@ -25,7 +25,8 @@ export function CheckoutForm() {
         body: JSON.stringify({
           name,
           items: items.map((item) => ({
-            menuItemId: item.menuItemId,
+            itemId: item.itemId,
+            itemType: item.itemType,
             quantity: item.quantity,
             specialInstructions: item.specialInstructions,
           })),
@@ -60,7 +61,7 @@ export function CheckoutForm() {
           className="mt-1 w-full rounded-lg border border-sand-300 px-3 py-2 text-ink-900 focus:border-ocean-500 focus:outline-none focus:ring-1 focus:ring-ocean-500"
         />
       </label>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm text-red-700">{error}</p>}
       <button
         type="submit"
         disabled={submitting || items.length === 0}

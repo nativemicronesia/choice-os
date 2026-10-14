@@ -14,25 +14,41 @@ import {
   isChoiceFixtureMode,
 } from "@/lib/dev/choice-fixtures";
 import { isSpecialScheduledForWeekday } from "@/lib/specials/schedule";
+import { POST as placeOrder } from "@/app/api/orders/route";
 
-test("fixtures support a private, server-priced pickup order through kitchen pickup", () => {
+test("fixtures support a private, server-priced pickup order through kitchen pickup", async () => {
   assert.equal(isChoiceFixtureMode(), true);
   const menu = fixtureMenu(true);
   const dish = menu.find((entry) => entry.name === "Choice Classic Burger");
   assert.ok(dish);
 
-  const trackingToken = randomBytes(32).toString("base64url");
-  const orderId = fixturePlaceOrder({
-    name: "Fixture Customer",
-    items: [{ item_id: dish.id, quantity: 2, special_instructions: "No onions" }],
-    trackingTokenHash: createHash("sha256").update(trackingToken).digest("hex"),
-  });
+  const dailySpecial = fixtureSpecials(true).find((special) => special.frequency === "daily");
+  assert.ok(dailySpecial);
+  const checkout = await placeOrder(new Request("http://localhost:3003/api/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Fixture Customer",
+      items: [
+        { itemId: dish.id, itemType: "menu", quantity: 2, specialInstructions: "No onions", unitPrice: 0.01 },
+        { itemId: dailySpecial.id, itemType: "special", quantity: 1, specialInstructions: "Sauce on side", unitPrice: 0.01 },
+      ],
+    }),
+  }));
+  const checkoutBody = await checkout.json() as { orderId: string };
+  assert.equal(checkout.status, 201);
+  const orderId = checkoutBody.orderId;
+  const trackingToken = checkout.headers.get("set-cookie")?.match(/choice_order_access=([^;]+)/)?.[1];
+  assert.ok(trackingToken);
   const tracked = fixtureTrackedOrder(orderId, trackingToken);
   assert.ok(tracked);
-  assert.equal(tracked.total, 9);
+  assert.equal(tracked.total, 15.5);
   assert.equal(tracked.order_items[0]?.price_at_time, dish.price);
   assert.equal(tracked.order_items[0]?.quantity, 2);
   assert.equal(tracked.order_items[0]?.special_instructions, "No onions");
+  assert.equal(tracked.order_items[1]?.item_name, dailySpecial.title);
+  assert.equal(tracked.order_items[1]?.price_at_time, dailySpecial.price);
+  assert.equal(tracked.order_items[1]?.special_instructions, "Sauce on side");
   assert.equal("trackingTokenHash" in tracked, false);
   assert.equal(fixtureTrackedOrder(orderId, "wrong-capability"), null);
 
@@ -51,6 +67,12 @@ test("fixtures support a private, server-priced pickup order through kitchen pic
   assert.equal(isSpecialScheduledForWeekday(daily, 0), true);
   assert.equal(isSpecialScheduledForWeekday(friday, 5), true);
   assert.equal(isSpecialScheduledForWeekday(friday, 4), false);
+  assert.throws(() => fixturePlaceOrder({
+    name: "Expired Special",
+    items: [{ item_id: friday.id, item_type: "special", quantity: 1, special_instructions: null }],
+    trackingTokenHash: createHash("sha256").update(randomBytes(32)).digest("hex"),
+    now: new Date("2026-10-15T00:00:00.000Z"), // Thursday in Chuuk
+  }));
 
   const newDish = fixtureUpsertMenu({
     id: "60000000-0000-4000-8000-000000000001",
@@ -82,7 +104,7 @@ test("fixtures support a private, server-priced pickup order through kitchen pic
   fixtureSetMenuAvailability(dish.id, false);
   assert.throws(() => fixturePlaceOrder({
     name: "Unavailable Item",
-    items: [{ item_id: dish.id, quantity: 1, special_instructions: null }],
+    items: [{ item_id: dish.id, item_type: "menu", quantity: 1, special_instructions: null }],
     trackingTokenHash: createHash("sha256").update(randomBytes(32)).digest("hex"),
   }));
   assert.equal(fixtureOwnerActiveOrders().length, activeCountBeforeUnavailableAttempt);

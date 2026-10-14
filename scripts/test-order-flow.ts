@@ -101,7 +101,7 @@ async function main() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: "Local Test Order",
-        items: [{ menuItemId: menu.data.id, quantity: 2, unitPrice: forgedClientPrice }],
+        items: [{ itemId: menu.data.id, itemType: "menu", quantity: 2, unitPrice: forgedClientPrice }],
       }),
     });
     const placed = (await place.json()) as { orderId?: string; error?: string };

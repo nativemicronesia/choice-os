@@ -29,17 +29,19 @@ Generate a development-only owner password hash with `npm run hash-password --
 place in fixture mode. Do not reuse production credentials. No Supabase URL,
 key, project, account, or database is needed.
 
-Open `http://localhost:3003` to browse the menu and specials, add food and
-quantities to the cart, submit a cash pickup order, and follow its private
+Open `http://localhost:3003` to browse the menu and scheduled specials, add food
+and quantities to the cart, add optional item instructions, submit a cash pickup
+order, and follow its private
 tracking link. Sign in at `/login` to edit the menu and specials, open `/kds` to
 advance the ticket, and review daily totals under `/os/day`. The fixture banner
 labels the simulated data on customer and owner pages. Kitchen, owner totals,
 and customer status refresh every two seconds; Supabase Realtime is not
 connected in fixture mode. Photo storage uploads are unavailable.
 
-The fixture store validates item availability and quantities, copies the menu's
-current name and price at checkout, calculates the total server-side, and adds
-the order and lines together only after every line validates. Tracking reads
+The fixture store validates item availability, special activation and Chuuk-day
+schedule, quantities, and instructions. It copies each menu or special name and
+price at checkout, calculates the total server-side, and adds the order and
+lines together only after every line validates. Tracking reads
 require the HttpOnly order capability cookie, and owner reads/mutations still
 require the signed owner session. This exercises application behavior only; it
 does not prove SQL atomicity, RLS, migrations, Supabase Auth, storage, or

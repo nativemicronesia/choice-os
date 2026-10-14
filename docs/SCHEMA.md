@@ -24,3 +24,9 @@ The Phase 2 migration `20261015103000_schedule_daily_specials.sql` adds daily
 and weekly recurrence to specials. Weekly day numbers follow JavaScript's
 Sunday=0 through Saturday=6 convention and storefront visibility is evaluated
 in Chuuk time (UTC+10).
+
+The Phase 3 migration `20261015120000_checkout_scheduled_specials.sql` extends
+the same atomic checkout function to accept menu items and currently scheduled
+specials. It snapshots each canonical name and price from the database, and
+rejects unavailable menu items, inactive specials, and weekly specials outside
+their Chuuk weekday schedule. Order and order-item reads remain server-only.

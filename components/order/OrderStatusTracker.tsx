@@ -66,7 +66,7 @@ export function OrderStatusTracker({
           <p className="text-sm text-neutral-500">Order for</p>
           <p className="text-xl font-semibold">{order.customer_name}</p>
         </div>
-        <StatusBadge status={order.status} />
+        <span aria-live="polite" aria-atomic="true"><StatusBadge status={order.status} /></span>
       </div>
 
       <ol className="mt-6 flex flex-col gap-3">

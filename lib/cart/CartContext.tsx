@@ -1,9 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartItem = {
-  menuItemId: string;
+  itemId: string;
+  itemType: "menu" | "special";
   name: string;
   unitPrice: number;
   quantity: number;
@@ -16,9 +17,9 @@ type CartContextValue = {
   subtotal: number;
   isDrawerOpen: boolean;
   addItem: (item: Omit<CartItem, "quantity" | "specialInstructions">, qty?: number) => void;
-  removeItem: (menuItemId: string) => void;
-  setQuantity: (menuItemId: string, qty: number) => void;
-  setInstructions: (menuItemId: string, text: string) => void;
+  removeItem: (itemId: string, itemType: CartItem["itemType"]) => void;
+  setQuantity: (itemId: string, itemType: CartItem["itemType"], qty: number) => void;
+  setInstructions: (itemId: string, itemType: CartItem["itemType"], text: string) => void;
   clearCart: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -31,15 +32,23 @@ const STORAGE_KEY = "choice-os-cart";
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
+  const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
 
-  // Hydrate from localStorage after mount only, to avoid an SSR/CSR mismatch
-  // (server always renders an empty cart). One-time read of an external
-  // source on mount, not a derived-state loop — safe to disable the rule here.
+  // Hydrate from localStorage after mount only, to avoid an SSR/CSR mismatch.
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setItems(JSON.parse(raw));
+      if (raw) {
+        const saved = JSON.parse(raw) as Array<CartItem | (Omit<CartItem, "itemId" | "itemType"> & { menuItemId: string })>;
+        // One-time hydration from an external source, not derived state.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setItems(saved.map((item) => ({
+          ...item,
+          itemId: "itemId" in item ? item.itemId : item.menuItemId,
+          itemType: "itemType" in item ? item.itemType : "menu",
+        })));
+      }
     } catch {
       // corrupt/blocked storage — start with an empty cart
     }
@@ -60,32 +69,36 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   function addItem(item: Omit<CartItem, "quantity" | "specialInstructions">, qty = 1) {
     setItems((prev) => {
-      const existing = prev.find((i) => i.menuItemId === item.menuItemId);
+      const existing = prev.find((i) => i.itemId === item.itemId && i.itemType === item.itemType);
       if (existing) {
         return prev.map((i) =>
-          i.menuItemId === item.menuItemId ? { ...i, quantity: i.quantity + qty } : i,
+          i.itemId === item.itemId && i.itemType === item.itemType
+            ? { ...i, quantity: Math.min(20, i.quantity + qty) }
+            : i,
         );
       }
-      return [...prev, { ...item, quantity: qty, specialInstructions: "" }];
+      return [...prev, { ...item, quantity: Math.min(20, qty), specialInstructions: "" }];
     });
     setIsDrawerOpen(true);
   }
 
-  function removeItem(menuItemId: string) {
-    setItems((prev) => prev.filter((i) => i.menuItemId !== menuItemId));
+  function removeItem(itemId: string, itemType: CartItem["itemType"]) {
+    setItems((prev) => prev.filter((i) => i.itemId !== itemId || i.itemType !== itemType));
   }
 
-  function setQuantity(menuItemId: string, qty: number) {
+  function setQuantity(itemId: string, itemType: CartItem["itemType"], qty: number) {
     if (qty <= 0) {
-      removeItem(menuItemId);
+      removeItem(itemId, itemType);
       return;
     }
-    setItems((prev) => prev.map((i) => (i.menuItemId === menuItemId ? { ...i, quantity: qty } : i)));
+    setItems((prev) => prev.map((i) => (
+      i.itemId === itemId && i.itemType === itemType ? { ...i, quantity: Math.min(20, qty) } : i
+    )));
   }
 
-  function setInstructions(menuItemId: string, text: string) {
+  function setInstructions(itemId: string, itemType: CartItem["itemType"], text: string) {
     setItems((prev) =>
-      prev.map((i) => (i.menuItemId === menuItemId ? { ...i, specialInstructions: text } : i)),
+      prev.map((i) => (i.itemId === itemId && i.itemType === itemType ? { ...i, specialInstructions: text } : i)),
     );
   }
 
@@ -104,8 +117,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         setQuantity,
         setInstructions,
         clearCart,
-        openDrawer: () => setIsDrawerOpen(true),
-        closeDrawer: () => setIsDrawerOpen(false),
+        openDrawer,
+        closeDrawer,
       }}
     >
       {children}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
 import { ItemImage } from "./ItemImage";
@@ -9,18 +9,55 @@ import { CheckoutForm } from "./CheckoutForm";
 export function CartDrawer() {
   const { items, subtotal, isDrawerOpen, closeDrawer, setQuantity, setInstructions, removeItem } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    closeButtonRef.current?.focus();
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeDrawer();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = document.querySelectorAll<HTMLElement>(
+        '[role="dialog"] a[href], [role="dialog"] button:not(:disabled), [role="dialog"] input:not(:disabled), [role="dialog"] [tabindex]:not([tabindex="-1"])',
+      );
+      const first = focusable.item(0);
+      const last = focusable.item(focusable.length - 1);
+      if (!first || !last) {
+        event.preventDefault();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      previousFocusRef.current?.focus();
+    };
+  }, [isDrawerOpen, closeDrawer]);
 
   if (!isDrawerOpen) return null;
 
   return (
     <div className="fixed inset-0 z-30 flex justify-end bg-ink-900/40" onClick={closeDrawer}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-title"
         className="flex h-full w-full max-w-sm flex-col bg-sand-50 p-4 shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-semibold text-ink-900">Your order</h2>
-          <button type="button" onClick={closeDrawer} className="text-ink-300" aria-label="Close cart">
+          <h2 id="cart-title" className="font-display text-lg font-semibold text-ink-900">Your order</h2>
+          <button ref={closeButtonRef} type="button" onClick={closeDrawer} className="text-ink-300" aria-label="Close cart">
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
@@ -29,7 +66,7 @@ export function CartDrawer() {
           {items.length === 0 && <p className="text-ink-300">Your cart is empty.</p>}
           <div className="flex flex-col gap-4">
             {items.map((item) => (
-              <div key={item.menuItemId} className="flex gap-3 border-b border-sand-200 pb-3">
+              <div key={`${item.itemType}:${item.itemId}`} className="flex gap-3 border-b border-sand-200 pb-3">
                 <ItemImage src={item.imageUrl} alt={item.name} size={48} />
                 <div className="flex-1">
                   <div className="flex items-start justify-between gap-2">
@@ -41,30 +78,34 @@ export function CartDrawer() {
                   <div className="mt-2 flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setQuantity(item.menuItemId, item.quantity - 1)}
+                      aria-label={`Decrease ${item.name} quantity`}
+                      onClick={() => setQuantity(item.itemId, item.itemType, item.quantity - 1)}
                       className="h-7 w-7 rounded-full border border-sand-300 text-ink-700"
                     >
                       −
                     </button>
-                    <span className="w-6 text-center text-ink-900">{item.quantity}</span>
+                    <span aria-live="polite" className="w-6 text-center text-ink-900">{item.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => setQuantity(item.menuItemId, item.quantity + 1)}
+                      aria-label={`Increase ${item.name} quantity`}
+                      onClick={() => setQuantity(item.itemId, item.itemType, item.quantity + 1)}
                       className="h-7 w-7 rounded-full border border-sand-300 text-ink-700"
                     >
                       +
                     </button>
                     <button
                       type="button"
-                      onClick={() => removeItem(item.menuItemId)}
+                      onClick={() => removeItem(item.itemId, item.itemType)}
                       className="ml-auto text-sm text-ink-300"
                     >
                       Remove
                     </button>
                   </div>
+                  <label className="sr-only" htmlFor={`instructions-${item.itemType}-${item.itemId}`}>Special instructions for {item.name}</label>
                   <input
+                    id={`instructions-${item.itemType}-${item.itemId}`}
                     value={item.specialInstructions}
-                    onChange={(event) => setInstructions(item.menuItemId, event.target.value)}
+                    onChange={(event) => setInstructions(item.itemId, item.itemType, event.target.value)}
                     placeholder="Special instructions (optional)"
                     className="mt-2 w-full rounded-lg border border-sand-200 px-2 py-1 text-sm text-ink-900 placeholder:text-ink-300"
                   />
@@ -80,6 +121,7 @@ export function CartDrawer() {
               <span>Subtotal</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
+            <p className="mb-3 text-xs text-ink-500">Prices are confirmed against today&apos;s menu when you place the order. Pay cash at pickup.</p>
             {isCheckingOut ? (
               <CheckoutForm />
             ) : (

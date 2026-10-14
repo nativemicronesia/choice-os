@@ -1,13 +1,17 @@
+"use client";
+
 import Image from "next/image";
+import { useCart } from "@/lib/cart/CartContext";
 import type { DailySpecial } from "@/lib/types/database";
 import { PlaceholderArt } from "./ItemImage";
 import { formatSpecialSchedule } from "@/lib/specials/schedule";
 
 export function SpecialsBanner({ specials }: { specials: DailySpecial[] }) {
+  const { addItem } = useCart();
   if (specials.length === 0) return null;
 
   return (
-    <div className="mt-4 -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
+    <section aria-label="Today’s specials" className="mt-4 -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1">
       {specials.map((special) => (
         <div
           key={special.id}
@@ -31,9 +35,22 @@ export function SpecialsBanner({ specials }: { specials: DailySpecial[] }) {
               </span>
             </div>
             {special.description && <p className="mt-1 text-sm text-ink-500">{special.description}</p>}
+            <button
+              type="button"
+              onClick={() => addItem({
+                itemId: special.id,
+                itemType: "special",
+                name: special.title,
+                unitPrice: special.price,
+                imageUrl: special.image_url,
+              })}
+              className="mt-3 min-h-11 w-full rounded-full bg-sunset-500 px-4 py-2 text-sm font-semibold text-white shadow"
+            >
+              Add special
+            </button>
           </div>
         </div>
       ))}
-    </div>
+    </section>
   );
 }

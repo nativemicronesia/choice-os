@@ -33,7 +33,8 @@ export function ItemCard({ item }: { item: MenuItem }) {
             disabled={!item.is_available}
             onClick={() =>
               addItem({
-                menuItemId: item.id,
+                itemId: item.id,
+                itemType: "menu",
                 name: item.name,
                 unitPrice: item.price,
                 imageUrl: item.image_url,
