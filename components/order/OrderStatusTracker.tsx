@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { refreshTrackedOrder } from "@/lib/actions/private-orders";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { cn } from "@/lib/utils/cn";
 import type { OrderStatus, OrderWithItems } from "@/lib/types/database";
@@ -18,26 +18,21 @@ export function OrderStatusTracker({ initialOrder }: { initialOrder: OrderWithIt
   const [order, setOrder] = useState(initialOrder);
 
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`order-${initialOrder.id}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${initialOrder.id}` },
-        (payload) => {
-          const next = payload.new as { status: OrderStatus; updated_at: string; total: number };
-          setOrder((prev) => ({
-            ...prev,
-            status: next.status,
-            updated_at: next.updated_at,
-            total: Number(next.total),
-          }));
-        },
-      )
-      .subscribe();
-
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await refreshTrackedOrder(initialOrder.id);
+        if (active && next) {
+          setOrder((prev) => ({ ...prev, status: next.status, updated_at: next.updated_at }));
+        }
+      } catch {
+        // Keep the last known status while the customer is offline.
+      }
+    };
+    const interval = window.setInterval(refresh, 2500);
     return () => {
-      supabase.removeChannel(channel);
+      active = false;
+      window.clearInterval(interval);
     };
   }, [initialOrder.id]);
 

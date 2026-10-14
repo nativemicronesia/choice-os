@@ -1,13 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { getActiveOrdersWithItems, getOrderWithItems } from "@/lib/supabase/queries";
+import { getOwnerActiveTickets, getOwnerTicket } from "@/lib/actions/private-orders";
 import { updateOrderStatus } from "@/lib/actions/orders";
 import { TicketBoard, type Ticket } from "@/components/kds/TicketBoard";
 import { SoundUnlockOverlay } from "@/components/kds/SoundUnlockOverlay";
 import { OsShell } from "@/components/os/OsShell";
-import type { Order, OrderItem, OrderStatus } from "@/lib/types/database";
+import type { OrderStatus } from "@/lib/types/database";
 
 function removeKey(record: Record<string, Ticket>, key: string): Record<string, Ticket> {
   const copy = { ...record };
@@ -26,62 +25,33 @@ export default function KdsPage() {
 
   useEffect(() => {
     let cancelled = false;
-
-    getActiveOrdersWithItems().then((orders) => {
-      if (cancelled) return;
-      const initial: Record<string, Ticket> = {};
-      for (const { order_items, ...order } of orders) {
-        initial[order.id] = { order, items: order_items };
+    let knownIds = new Set<string>();
+    let initialized = false;
+    const refresh = async () => {
+      try {
+        const orders = await getOwnerActiveTickets();
+        if (cancelled) return;
+        const next: Record<string, Ticket> = {};
+        for (const { order_items, ...order } of orders) {
+          next[order.id] = { order, items: order_items };
+        }
+        if (initialized && orders.some(({ id }) => !knownIds.has(id))) {
+          audioRef.current?.play().catch(() => {});
+        }
+        knownIds = new Set(orders.map(({ id }) => id));
+        initialized = true;
+        setTickets(next);
+      } catch {
+        // Retain existing tickets when the local connection briefly drops.
       }
-      setTickets(initial);
-    });
+    };
 
-    const supabase = createClient();
-    const channel = supabase
-      .channel("kds-orders")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        async (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newOrder = payload.new as Order;
-            if (newOrder.status !== "pending") return;
-            const { data: items } = await supabase
-              .from("order_items")
-              .select("*")
-              .eq("order_id", newOrder.id);
-            setTickets((prev) => ({
-              ...prev,
-              [newOrder.id]: {
-                order: { ...newOrder, total: Number(newOrder.total) },
-                items: (items ?? []) as OrderItem[],
-              },
-            }));
-            audioRef.current?.play().catch(() => {});
-          } else if (payload.eventType === "UPDATE") {
-            const updated = payload.new as Order;
-            setTickets((prev) => {
-              if (updated.status === "completed") {
-                return removeKey(prev, updated.id);
-              }
-              const existing = prev[updated.id];
-              if (!existing) return prev;
-              return {
-                ...prev,
-                [updated.id]: {
-                  ...existing,
-                  order: { ...existing.order, status: updated.status, updated_at: updated.updated_at },
-                },
-              };
-            });
-          }
-        },
-      )
-      .subscribe();
+    void refresh();
+    const interval = window.setInterval(refresh, 2500);
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      window.clearInterval(interval);
     };
   }, []);
 
@@ -89,7 +59,7 @@ export default function KdsPage() {
     const result = await updateOrderStatus(orderId, current, next);
     if (!result.success) {
       // Lost a race with another tablet — soft-refresh just this ticket.
-      const fresh = await getOrderWithItems(orderId);
+      const fresh = await getOwnerTicket(orderId);
       setTickets((prev) => {
         if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
         const { order_items, ...order } = fresh;

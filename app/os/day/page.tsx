@@ -1,4 +1,4 @@
-import { getAllDailySpecials, getTodaysOrders } from "@/lib/supabase/queries";
+import { getOwnerDayOrders, getOwnerSpecials } from "@/lib/actions/private-orders";
 import { AnalyticsCard } from "@/components/admin/AnalyticsCard";
 import { SpecialsList } from "@/components/admin/SpecialsList";
 import { OsShell } from "@/components/os/OsShell";
@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 export default async function OsDayPage() {
   const [specials, todaysOrders] = await Promise.all([
-    getAllDailySpecials(),
-    getTodaysOrders(),
+    getOwnerSpecials(),
+    getOwnerDayOrders(),
   ]);
 
   return (

@@ -10,15 +10,24 @@
   `lib/supabase/admin.ts` (service-role key) in Server Actions after
   `requireOwnerSession()` — never expose `SUPABASE_SERVICE_ROLE_KEY` to a
   Client Component.
-- RLS: every table has RLS enabled. anon key gets SELECT everywhere, INSERT
-  only on `orders`/`order_items`. There is no UPDATE/DELETE policy for anon —
-  that's intentional; don't add one without a written reason.
+- RLS: every table has RLS enabled. The anon key may read menu items and daily
+  specials only. It cannot read or write `orders`/`order_items`. Never restore
+  public order reads for tracking or the kitchen.
+- Checkout posts only menu-item IDs, quantities, a customer name, and optional
+  instructions to `/api/orders`. The server calls `place_pickup_order`, which
+  checks availability, copies current names/prices, calculates the total, and
+  inserts the order plus all items in one transaction. Do not accept prices or
+  totals from a browser.
+- Each pickup order gets a random tracking capability in an HttpOnly cookie
+  scoped to its order URL; only a SHA-256 hash is stored. Tracker reads must
+  verify the capability server-side. Owner reads use the service-role client
+  only after `requireOwnerSession()`.
 - `orders.status` transitions: `pending -> cooking -> ready -> completed` only,
   enforced by the CHECK constraint. Any new status value needs a migration.
-- Realtime: `orders` is in the `supabase_realtime` publication (must stay —
-  KDS and `/order/[id]` depend on <100ms updates). If you add tables that
-  need live updates, add them to the publication in a new migration, don't
-  edit the Phase 1 migration file after it's applied.
+- Realtime: `orders` remains in the `supabase_realtime` publication, but
+  browser clients must never subscribe directly to order row changes. Current
+  KDS, owner analytics, and customer tracking
+  refresh through session/capability-checked server actions every 2.5–5 seconds.
 - Category values on `menu_items` are free text, not an enum — must match the
   UI's filter tabs exactly: 'Local Specials', 'Burgers & Sandwiches', 'Sides',
   'Cold Drinks'. Changing a tab label requires a data migration.
@@ -29,10 +38,6 @@
 - Env: dedicated Supabase project for choice-os — never share project/keys
   with sweetoh-os, island-sprouts-os, nmh-os, or nwa-os.
 - Dev port 3003 (avoid collision with sweetoh-os on 3002).
-- Known Phase 1 limitation: the `orders` INSERT policy trusts the client-supplied
-  `total` (only checks `status = 'pending'`). Acceptable for cash-at-pickup in
-  Phase 1; Phase 3 should add a `SECURITY DEFINER` RPC that recomputes `total`
-  server-side from `order_items` instead of trusting the client.
 - Deploy: the Docker container runs only the Next.js app — Supabase stays
   hosted, never containerized here. `nginx/certs/*.pem` are real TLS material
   and must never be committed (gitignored, user-provided per `docs/DEPLOY.md`).

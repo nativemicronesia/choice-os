@@ -1,38 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { chuukTodayRangeUtc } from "@/lib/time/chuukToday";
+import { getOwnerDayOrders } from "@/lib/actions/private-orders";
 import type { Order } from "@/lib/types/database";
 
 export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState(initialOrders);
 
   useEffect(() => {
-    const { startUtc, endUtc } = chuukTodayRangeUtc();
-    const supabase = createClient();
-    const channel = supabase
-      .channel("admin-analytics-orders")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, (payload) => {
-        if (payload.eventType === "INSERT") {
-          const created = payload.new as Order;
-          const createdAt = new Date(created.created_at);
-          if (createdAt >= startUtc && createdAt < endUtc) {
-            setOrders((prev) => [...prev, { ...created, total: Number(created.total) }]);
-          }
-        } else if (payload.eventType === "UPDATE") {
-          const updated = payload.new as Order;
-          setOrders((prev) =>
-            prev.map((order) =>
-              order.id === updated.id ? { ...order, status: updated.status, total: Number(updated.total) } : order,
-            ),
-          );
-        }
-      })
-      .subscribe();
-
+    let active = true;
+    const refresh = async () => {
+      try {
+        const next = await getOwnerDayOrders();
+        if (active) setOrders(next);
+      } catch {
+        // Keep the last known totals when temporarily offline.
+      }
+    };
+    const interval = window.setInterval(refresh, 5000);
     return () => {
-      supabase.removeChannel(channel);
+      active = false;
+      window.clearInterval(interval);
     };
   }, []);
 

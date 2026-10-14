@@ -1,0 +1,111 @@
+import "server-only";
+
+import { createHash } from "node:crypto";
+import { cookies } from "next/headers";
+import { createAdminClient } from "@/lib/supabase/admin";
+import type { Order, OrderItem, OrderWithItems } from "@/lib/types/database";
+
+const TRACKING_COOKIE = "choice_order_access";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function orderFromRow(row: OrderWithItems): OrderWithItems {
+  return {
+    ...row,
+    total: Number(row.total),
+    order_items: row.order_items.map((item) => ({
+      ...item,
+      price_at_time: Number(item.price_at_time),
+    })),
+  };
+}
+
+export async function getTrackedOrder(id: string): Promise<OrderWithItems | null> {
+  if (!UUID.test(id)) return null;
+  const token = (await cookies()).get(TRACKING_COOKIE)?.value;
+  if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", id)
+    .eq("tracking_token_hash", tokenHash)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? orderFromRow(data as OrderWithItems) : null;
+}
+
+export async function getTrackedOrderStatus(id: string): Promise<Pick<Order, "status" | "updated_at"> | null> {
+  if (!UUID.test(id)) return null;
+  const token = (await cookies()).get(TRACKING_COOKIE)?.value;
+  if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("status,updated_at")
+    .eq("id", id)
+    .eq("tracking_token_hash", tokenHash)
+    .maybeSingle();
+  if (error) throw error;
+  return data as Pick<Order, "status" | "updated_at"> | null;
+}
+
+export async function getOwnerOrderWithItems(id: string): Promise<OrderWithItems | null> {
+  if (!UUID.test(id)) return null;
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("*, order_items(*)")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? orderFromRow(data as OrderWithItems) : null;
+}
+
+export async function getOwnerActiveOrders(): Promise<OrderWithItems[]> {
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("*, order_items(*)")
+    .in("status", ["pending", "cooking", "ready"])
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return ((data ?? []) as OrderWithItems[]).map(orderFromRow);
+}
+
+export async function getOwnerTodaysOrders(start: string, end: string): Promise<Order[]> {
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("id,status,total,created_at,updated_at,customer_name")
+    .gte("created_at", start)
+    .lt("created_at", end);
+  if (error) throw error;
+  return ((data ?? []) as Order[]).map((row) => ({ ...row, total: Number(row.total) }));
+}
+
+export async function getOwnerMenuItems() {
+  const { data, error } = await createAdminClient()
+    .from("menu_items")
+    .select("*")
+    .order("category")
+    .order("name");
+  if (error) throw error;
+  return ((data ?? []) as import("@/lib/types/database").MenuItem[]).map((row) => ({
+    ...row,
+    price: Number(row.price),
+  }));
+}
+
+export async function getOwnerDailySpecials() {
+  const { data, error } = await createAdminClient()
+    .from("daily_specials")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as import("@/lib/types/database").DailySpecial[]).map((row) => ({
+    ...row,
+    price: Number(row.price),
+  }));
+}
+
+export type OwnerOrderSnapshot = { orders: Order[]; active: OrderWithItems[] };
+export type OrderItemSnapshot = OrderItem;

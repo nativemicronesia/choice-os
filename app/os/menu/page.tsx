@@ -1,11 +1,11 @@
-import { getMenuItems } from "@/lib/supabase/queries";
+import { getOwnerMenu } from "@/lib/actions/private-orders";
 import { OsShell } from "@/components/os/OsShell";
 import { TodaysMenuManager } from "@/components/os/TodaysMenuManager";
 
 export const dynamic = "force-dynamic";
 
 export default async function OsMenuPage() {
-  const items = await getMenuItems();
+  const items = await getOwnerMenu();
 
   return (
     <OsShell

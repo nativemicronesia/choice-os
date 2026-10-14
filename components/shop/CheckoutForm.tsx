@@ -3,7 +3,6 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/CartContext";
-import { createClient } from "@/lib/supabase/client";
 
 export function CheckoutForm() {
   const { items, subtotal, clearCart } = useCart();
@@ -18,38 +17,35 @@ export function CheckoutForm() {
 
     setSubmitting(true);
     setError(null);
-    const supabase = createClient();
-
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({ customer_name: name.trim(), status: "pending", total: subtotal })
-      .select()
-      .single();
-
-    if (orderError || !order) {
-      setError("Couldn't place your order. Please try again.");
+    let response: Response;
+    try {
+      response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          items: items.map((item) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            specialInstructions: item.specialInstructions,
+          })),
+        }),
+      });
+    } catch {
+      setError("Couldn't place your order. Check your connection and try again.");
       setSubmitting(false);
       return;
     }
 
-    const { error: itemsError } = await supabase.from("order_items").insert(
-      items.map((item) => ({
-        order_id: order.id,
-        item_name: item.name,
-        quantity: item.quantity,
-        price_at_time: item.unitPrice,
-        special_instructions: item.specialInstructions || null,
-      })),
-    );
-
-    if (itemsError) {
-      setError("Your order was started but items failed to save — please try again.");
+    const result = (await response.json().catch(() => null)) as { orderId?: string; error?: string } | null;
+    if (!response.ok || !result?.orderId) {
+      setError(result?.error ?? "Couldn't place your order. Please try again.");
       setSubmitting(false);
       return;
     }
 
     clearCart();
-    router.push(`/order/${order.id}`);
+    router.push(`/order/${result.orderId}`);
   }
 
   return (

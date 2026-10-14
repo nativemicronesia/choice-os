@@ -8,3 +8,9 @@ The original schema spec arrived as a paste split across many small messages, an
 - `orders` — only `status` and `created_at` survived the paste. Added `id`, `customer_name`, `total`, `updated_at`. `customer_name` (required, no phone, no auth) was confirmed directly with the user: orders identify a customer by name only (e.g. "Order for Mary" on the kitchen ticket).
 
 See `supabase/migrations/20260805120000_init_schema.sql` for the full DDL, RLS policies, and the `orders` realtime publication.
+
+The hardening migration `20261014141725_secure_order_checkout.sql` adds a
+tracking-token hash to orders and a service-role-only `place_pickup_order`
+function. That function snapshots current available menu prices and inserts
+the order and its items atomically. It also removes public order and order-item
+read/write access; tracking and owner reads now go through server-side checks.

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getOrderWithItems } from "@/lib/supabase/queries";
+import { getTrackedOrder } from "@/lib/supabase/private-orders";
 import { OrderStatusTracker } from "@/components/order/OrderStatusTracker";
 
 // See app/(shop)/page.tsx — no Supabase project exists yet, force on-request
@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = await getOrderWithItems(id);
+  const order = await getTrackedOrder(id);
   if (!order) notFound();
 
   return (
