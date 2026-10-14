@@ -79,7 +79,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       return [...prev, { ...item, quantity: Math.min(20, qty), specialInstructions: "" }];
     });
-    setIsDrawerOpen(true);
   }
 
   function removeItem(itemId: string, itemType: CartItem["itemType"]) {

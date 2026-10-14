@@ -21,25 +21,28 @@ export function MenuBrowser({ items }: { items: MenuItem[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="mt-6 rounded-2xl border border-dashed border-sand-300 py-10 text-center text-sm text-ink-500">
-        Nothing on today&apos;s board yet. Check back soon, or visit the shop to walk in.
-      </p>
+      <div className="mt-6 rounded-2xl border border-dashed border-sand-300 bg-white px-5 py-12 text-center">
+        <p className="font-display text-xl font-semibold text-ink-900">The menu is being updated</p>
+        <p className="mt-2 text-sm text-ink-500">There are no dishes available to order online right now. Please check back soon.</p>
+      </div>
     );
   }
 
   return (
-    <div className="mt-4">
+    <div className="mt-6">
       <CategoryTabs
         categories={availableCategories}
         selected={activeCategory}
         onSelect={setSelected}
       />
-      <div className="mt-4 flex flex-col gap-3">
-        {filtered.map((item) => (
-          <ItemCard key={item.id} item={item} />
-        ))}
+      <div className="mb-3 mt-5 flex items-center justify-between gap-3">
+        <p className="text-sm font-medium text-ink-700">{activeCategory}</p>
+        <p className="text-sm text-ink-500">{filtered.length} {filtered.length === 1 ? "item" : "items"}</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2 md:gap-4">
+        {filtered.map((item) => <ItemCard key={item.id} item={item} />)}
         {filtered.length === 0 && (
-          <p className="py-8 text-center text-ink-300">Nothing in this category today.</p>
+          <p className="rounded-xl border border-dashed border-sand-300 py-8 text-center text-sm text-ink-500 md:col-span-2">Nothing is available in this category today.</p>
         )}
       </div>
     </div>

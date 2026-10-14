@@ -49,3 +49,26 @@
 :root {
   color-scheme: light;
 }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+.choice-hero-glow {
+  position: absolute;
+  z-index: -1;
+  top: -28rem;
+  right: -18rem;
+  width: min(78vw, 68rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(38, 128, 163, 0.42), rgba(18, 59, 82, 0) 68%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

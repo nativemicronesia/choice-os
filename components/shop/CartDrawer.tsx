@@ -60,31 +60,34 @@ export function CartDrawer() {
   if (!isDrawerOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-30 flex justify-end bg-ink-900/40" onClick={closeCart}>
+    <div className="fixed inset-0 z-40 flex justify-end bg-ink-900/55 backdrop-blur-[2px]" onClick={closeCart}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        className="flex h-dvh w-full max-w-sm flex-col bg-sand-50 p-4 shadow-xl"
+        className="flex h-dvh w-full max-w-lg flex-col overscroll-contain bg-sand-50 px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[max(1.25rem,env(safe-area-inset-top))] shadow-2xl sm:px-7"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between">
-          <h2 id="cart-title" className="font-display text-lg font-semibold text-ink-900">Your order</h2>
+          <div>
+            <h2 id="cart-title" className="font-display text-2xl font-semibold text-ink-900">Your order</h2>
+            <p className="mt-1 text-sm text-ink-500">Pickup in Weno · Pay cash at the counter</p>
+          </div>
           <button ref={closeButtonRef} type="button" onClick={closeCart} className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink-700" aria-label="Close cart">
             <X className="h-5 w-5" aria-hidden="true" />
           </button>
         </div>
 
-        <div className="mt-4 flex-1 overflow-y-auto">
-          {items.length === 0 && <p className="text-ink-300">Your cart is empty.</p>}
+        <div className="mt-6 flex-1 overflow-y-auto">
+          {items.length === 0 && <p className="rounded-xl bg-white p-4 text-sm text-ink-500">Your order is empty. Close this panel to keep browsing.</p>}
           <div className="flex flex-col gap-4">
             {items.map((item) => (
-              <div key={`${item.itemType}:${item.itemId}`} className="flex gap-3 border-b border-sand-200 pb-3">
+              <div key={`${item.itemType}:${item.itemId}`} className="flex gap-3 border-b border-sand-200 pb-5">
                 <ItemImage src={item.imageUrl} alt={item.name} size={48} />
                 <div className="flex-1">
                   <div className="flex items-start justify-between gap-2">
-                    <span className="font-medium text-ink-900">{item.name}</span>
-                    <span className="font-medium text-ink-900">
+                    <span className="font-semibold text-ink-900">{item.name}</span>
+                    <span className="shrink-0 font-semibold tabular-nums text-ink-900">
                       ${(item.unitPrice * item.quantity).toFixed(2)}
                     </span>
                   </div>
@@ -93,7 +96,7 @@ export function CartDrawer() {
                       type="button"
                       aria-label={`Decrease ${item.name} quantity`}
                       onClick={() => setQuantity(item.itemId, item.itemType, item.quantity - 1)}
-                      className="min-h-11 min-w-11 rounded-full border border-sand-300 text-ink-700"
+                      className="min-h-11 min-w-11 rounded-full border border-sand-300 bg-white text-ink-700 transition-colors hover:border-ocean-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-800"
                     >
                       −
                     </button>
@@ -102,14 +105,14 @@ export function CartDrawer() {
                       type="button"
                       aria-label={`Increase ${item.name} quantity`}
                       onClick={() => setQuantity(item.itemId, item.itemType, item.quantity + 1)}
-                      className="min-h-11 min-w-11 rounded-full border border-sand-300 text-ink-700"
+                      className="min-h-11 min-w-11 rounded-full border border-sand-300 bg-white text-ink-700 transition-colors hover:border-ocean-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-800"
                     >
                       +
                     </button>
                     <button
                       type="button"
                       onClick={() => removeItem(item.itemId, item.itemType)}
-                      className="ml-auto min-h-11 px-2 text-sm font-medium text-ink-700 underline underline-offset-2"
+                      className="ml-auto min-h-11 px-2 text-sm font-semibold text-ocean-800 underline underline-offset-2 hover:text-ocean-600 focus-visible:outline-2 focus-visible:outline-offset-2"
                     >
                       Remove
                     </button>
@@ -119,8 +122,8 @@ export function CartDrawer() {
                     id={`instructions-${item.itemType}-${item.itemId}`}
                     value={item.specialInstructions}
                     onChange={(event) => setInstructions(item.itemId, item.itemType, event.target.value)}
-                    placeholder="Special instructions (optional)"
-                    className="mt-2 min-h-11 w-full rounded-lg border border-sand-200 px-3 py-2 text-sm text-ink-900 placeholder:text-ink-500"
+                    placeholder="Note for the kitchen (optional)…"
+                    className="mt-3 min-h-11 w-full rounded-xl border border-sand-300 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-500 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-700"
                   />
                 </div>
               </div>
@@ -130,18 +133,18 @@ export function CartDrawer() {
 
         {items.length > 0 && (
           <div className="mt-4 border-t border-sand-200 pt-4">
-            <div className="mb-3 flex items-center justify-between font-display font-semibold text-ink-900">
-              <span>Subtotal</span>
+            <div className="mb-3 flex items-center justify-between font-display text-lg font-semibold text-ink-900">
+              <span>Total</span>
               <span>${subtotal.toFixed(2)}</span>
             </div>
-            <p className="mb-3 text-xs text-ink-500">Prices are confirmed against today&apos;s menu when you place the order. Pay cash at pickup.</p>
+            <p className="mb-4 text-xs leading-5 text-ink-500">The final total is confirmed against today&apos;s menu when you place your order. Pay cash when you collect.</p>
             {isCheckingOut ? (
               <CheckoutForm onCancel={() => setIsCheckingOut(false)} onOrderPlaced={finishCheckout} />
             ) : (
               <button
                 type="button"
                 onClick={() => setIsCheckingOut(true)}
-                className="min-h-11 w-full rounded-lg bg-ocean-700 py-2.5 text-center font-semibold text-white"
+                className="min-h-12 w-full rounded-full bg-ocean-900 py-3 text-center font-semibold text-white transition-colors hover:bg-ocean-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sunset-700"
               >
                 Checkout
               </button>

@@ -52,21 +52,24 @@ export function CheckoutForm({ onCancel, onOrderPlaced }: { onCancel: () => void
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <label className="text-sm font-medium text-ink-900">
-        Name for your order
+      <label className="text-sm font-semibold text-ink-900">
+        Name for pickup
         <input
+          name="customerName"
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder="e.g. Mary"
+          autoComplete="off"
+          autoCapitalize="words"
           required
-          className="mt-1 min-h-11 w-full rounded-lg border border-sand-300 px-3 py-2 text-ink-900 focus:border-ocean-500 focus:outline-none focus:ring-1 focus:ring-ocean-500"
+          className="mt-1.5 min-h-12 w-full rounded-xl border border-sand-300 bg-white px-3 py-2 text-ink-900 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ocean-700"
         />
       </label>
       {error && <p role="alert" aria-live="assertive" className="text-sm text-red-700">{error}</p>}
       <button
         type="submit"
         disabled={submitting || items.length === 0}
-        className="min-h-11 rounded-lg bg-sunset-500 py-2.5 text-center font-semibold text-white disabled:bg-sand-300"
+        className="min-h-12 rounded-full bg-sunset-700 py-3 text-center font-semibold text-white transition-colors hover:bg-sunset-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-900 disabled:cursor-wait disabled:bg-sand-300 disabled:text-ink-700"
       >
         {submitting ? "Placing order…" : `Place order · $${subtotal.toFixed(2)}`}
       </button>
@@ -74,7 +77,7 @@ export function CheckoutForm({ onCancel, onOrderPlaced }: { onCancel: () => void
         type="button"
         onClick={onCancel}
         disabled={submitting}
-        className="min-h-11 rounded-lg border border-sand-300 py-2.5 text-center text-sm font-semibold text-ink-700 disabled:opacity-60"
+        className="min-h-11 rounded-full border border-sand-300 bg-white py-2.5 text-center text-sm font-semibold text-ink-700 transition-colors hover:border-ocean-700 hover:text-ocean-900 focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60"
       >
         Back to cart
       </button>
