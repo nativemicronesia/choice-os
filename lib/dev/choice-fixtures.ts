@@ -65,10 +65,11 @@ declare global {
   var __choiceFixtureState: FixtureState | undefined;
 }
 
-/** Fixture data is intentionally process-local and only available in Next development mode. */
+/** Fixture data is process-local and limited to local development or Vercel Preview. */
 export function isChoiceFixtureMode(): boolean {
   const enabled = process.env.CHOICE_DATA_MODE === "fixtures";
-  if (enabled && process.env.NODE_ENV === "production") {
+  const temporaryPreview = process.env.VERCEL_ENV === "preview";
+  if (enabled && process.env.NODE_ENV === "production" && !temporaryPreview) {
     throw new Error("Choice fixture mode is disabled in production");
   }
   return enabled;

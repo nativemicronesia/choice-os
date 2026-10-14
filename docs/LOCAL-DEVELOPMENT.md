@@ -96,3 +96,14 @@ NMH's established browser-control MCP is unavailable to this Codex session.
 Chrome opened the local storefront, but desktop capture was unavailable, so
 visual click-through and phone/tablet viewport checks remain for a session with
 a usable visible browser. No substitute browser automation was introduced.
+
+## Temporary hosted preview
+
+The fixture mode may also be enabled for a Vercel Preview deployment by setting
+`CHOICE_DATA_MODE=fixtures` and `NEXT_PUBLIC_CHOICE_DATA_MODE=fixtures` in the
+Preview environment. It remains disabled for production deployments. A hosted
+preview is for viewing and short owner walkthroughs only: fixture orders and
+menu edits live in a function process, can reset after a cold start, and are not
+guaranteed to synchronize across separate function instances. Do not treat its
+sales or order data as durable. Use Preview-only owner credentials and remove
+them when the temporary preview is retired.
