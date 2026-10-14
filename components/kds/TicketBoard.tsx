@@ -3,10 +3,10 @@ import { TicketCard } from "./TicketCard";
 
 export type Ticket = { order: Order; items: OrderItem[] };
 
-const STAGES: { status: Exclude<OrderStatus, "completed">; label: string }[] = [
-  { status: "pending", label: "New tickets" },
-  { status: "cooking", label: "Preparing" },
-  { status: "ready", label: "Ready for pickup" },
+const STAGES: { status: Exclude<OrderStatus, "completed">; label: string; accent: string }[] = [
+  { status: "pending", label: "New", accent: "border-ocean-700" },
+  { status: "cooking", label: "Preparing", accent: "border-sunset-500" },
+  { status: "ready", label: "Ready for Pickup", accent: "border-ink-700" },
 ];
 
 export function TicketBoard({
@@ -25,10 +25,10 @@ export function TicketBoard({
           .filter((ticket) => ticket.order.status === stage.status)
           .sort((a, b) => new Date(a.order.created_at).getTime() - new Date(b.order.created_at).getTime());
         return (
-          <section key={stage.status} aria-labelledby={`stage-${stage.status}`} className="min-w-0">
+          <section key={stage.status} aria-labelledby={`stage-${stage.status}`} className={`min-w-0 border-t-4 ${stage.accent} pt-3`}>
             <header className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-2">
               <h2 id={`stage-${stage.status}`} className="font-semibold text-neutral-800">{stage.label}</h2>
-              <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
+              <span aria-live="polite" aria-label={`${stageTickets.length} ${stage.label.toLowerCase()} tickets`} className="rounded-full bg-neutral-200 px-2 py-0.5 text-xs font-semibold text-neutral-700">
                 {stageTickets.length}
               </span>
             </header>
@@ -43,7 +43,7 @@ export function TicketBoard({
                 />
               )) : (
                 <p className="rounded-xl border border-dashed border-neutral-300 px-3 py-6 text-center text-sm text-neutral-400">
-                  No {stage.label.toLowerCase()}.
+                  No tickets in this lane.
                 </p>
               )}
             </div>

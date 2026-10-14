@@ -3,9 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { getOwnerDayOrders, getOwnerKitchenRealtimeTopic } from "@/lib/actions/private-orders";
 import { createClient } from "@/lib/supabase/client";
-import type { Order } from "@/lib/types/database";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import type { OrderWithItems } from "@/lib/types/database";
 
-export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
+const chuukTime = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Pacific/Pohnpei",
+  dateStyle: "medium",
+  timeStyle: "short",
+});
+
+export function AnalyticsCard({ initialOrders }: { initialOrders: OrderWithItems[] }) {
   const [orders, setOrders] = useState(initialOrders);
 
   useEffect(() => {
@@ -67,16 +74,71 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
       </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
         <p className="text-2xl font-bold">${revenueToday.toFixed(2)}</p>
-        <p className="text-xs text-neutral-500">Revenue today</p>
+        <p className="text-xs text-neutral-500">Cash collected</p>
       </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
         <p className="text-2xl font-bold">{completedToday}</p>
-        <p className="text-xs text-neutral-500">Orders completed</p>
+        <p className="text-xs text-neutral-500">Pickups completed</p>
       </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
         <p className="text-2xl font-bold">{activeTickets}</p>
         <p className="text-xs text-neutral-500">Active tickets</p>
       </div>
+      <p className="col-span-2 -mt-1 text-center text-xs text-neutral-500 sm:col-span-4">
+        Cash collected includes completed pickups only.
+      </p>
+      <section aria-labelledby="today-orders-title" className="col-span-2 mt-2 sm:col-span-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 id="today-orders-title" className="text-lg font-semibold text-ink-900">Today&apos;s orders</h2>
+          <span className="text-sm text-ink-500">{orders.length}</span>
+        </div>
+        {orders.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-sand-300 p-5 text-center text-sm text-ink-500">
+            No pickup orders yet today.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {orders.map((order) => (
+              <li key={order.id}>
+                <details className="rounded-xl border border-sand-200 bg-white shadow-sm">
+                  <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-ink-900">{order.customer_name}</span>
+                      <span className="block text-xs text-ink-500">
+                        <time dateTime={order.created_at}>{chuukTime.format(new Date(order.created_at))}</time>
+                        {" · "}Ticket {order.id.slice(0, 8).toUpperCase()}
+                        {" · "}{order.order_items.length} line{order.order_items.length === 1 ? "" : "s"}
+                      </span>
+                    </span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="font-semibold text-ink-900">${Number(order.total).toFixed(2)}</span>
+                      <StatusBadge status={order.status} />
+                    </span>
+                  </summary>
+                  <div className="border-t border-sand-100 px-4 py-3">
+                    <ul className="flex flex-col gap-2">
+                      {order.order_items.map((item) => (
+                        <li key={item.id} className="text-sm text-ink-800">
+                          <span className="font-medium">{item.quantity}× {item.item_name}</span>
+                          <span className="ml-2 text-ink-500">${(Number(item.price_at_time) * item.quantity).toFixed(2)}</span>
+                          {item.special_instructions ? (
+                            <span className="mt-1 block rounded-md bg-sand-100 px-2 py-1 text-ink-700">
+                              Note: {item.special_instructions}
+                            </span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 border-t border-sand-100 pt-2 text-right text-sm font-semibold text-ink-900">
+                      Order total · ${Number(order.total).toFixed(2)}
+                    </p>
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
     </div>
   );
 }

@@ -38,6 +38,13 @@ labels the simulated data on customer and owner pages. Kitchen, owner totals,
 and customer status refresh every two seconds; Supabase Realtime is not
 connected in fixture mode. Photo storage uploads are unavailable.
 
+The Day screen shows order count, cash collected for completed pickups, active
+tickets, and an expandable list of today's orders with Chuuk-local timestamps,
+line quantities, instructions, prices, and status. The Kitchen screen keeps New,
+Preparing, and Ready for Pickup tickets in separate lanes and refreshes fixture
+state every two seconds; status buttons move tickets immediately in the shared
+fixture store.
+
 The fixture store validates item availability, special activation and Chuuk-day
 schedule, quantities, and instructions. It copies each menu or special name and
 price at checkout, calculates the total server-side, and adds the order and

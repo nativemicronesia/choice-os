@@ -98,15 +98,16 @@ export async function getOwnerActiveOrders(): Promise<OrderWithItems[]> {
   return ((data ?? []) as OrderWithItems[]).map(orderFromRow);
 }
 
-export async function getOwnerTodaysOrders(start: string, end: string): Promise<Order[]> {
+export async function getOwnerTodaysOrders(start: string, end: string): Promise<OrderWithItems[]> {
   if (isChoiceFixtureMode()) return fixtureOwnerOrders(start, end);
   const { data, error } = await createAdminClient()
     .from("orders")
-    .select("id,status,total,created_at,updated_at,customer_name")
+    .select("*, order_items(*)")
     .gte("created_at", start)
-    .lt("created_at", end);
+    .lt("created_at", end)
+    .order("created_at", { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as Order[]).map((row) => ({ ...row, total: Number(row.total) }));
+  return ((data ?? []) as OrderWithItems[]).map(orderFromRow);
 }
 
 export async function getOwnerMenuItems() {

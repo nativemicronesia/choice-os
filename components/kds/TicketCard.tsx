@@ -6,9 +6,9 @@ import { nextStatus } from "@/lib/orders/transitions";
 import type { Order, OrderItem, OrderStatus } from "@/lib/types/database";
 
 const ADVANCE_LABELS: Record<OrderStatus, string> = {
-  pending: "Start Cooking",
-  cooking: "Mark Ready",
-  ready: "Complete",
+  pending: "Start Preparing",
+  cooking: "Mark Ready for Pickup",
+  ready: "Mark Picked Up",
   completed: "",
 };
 
@@ -33,6 +33,12 @@ function formatElapsed(totalSeconds: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
+const chuukClock = new Intl.DateTimeFormat("en-US", {
+  timeZone: "Pacific/Pohnpei",
+  hour: "numeric",
+  minute: "2-digit",
+});
+
 export function TicketCard({
   order,
   items,
@@ -50,20 +56,26 @@ export function TicketCard({
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">{order.customer_name}</h3>
+        <h3 className="text-lg font-bold text-ink-900">{order.customer_name}</h3>
         <StatusBadge status={order.status} />
       </div>
-      <p className="mt-1 text-sm text-neutral-500">{formatElapsed(elapsed)} elapsed</p>
-      <p className="mt-1 text-xs font-medium text-neutral-500">Cash pickup · ${order.total.toFixed(2)}</p>
+      <p className="text-xs font-medium uppercase tracking-wide text-neutral-500">Ticket {order.id.slice(0, 8).toUpperCase()}</p>
+      <div className="mt-1 flex items-center justify-between gap-2 text-sm text-neutral-600">
+        <p>{formatElapsed(elapsed)} elapsed</p>
+        <time dateTime={order.created_at}>Received {chuukClock.format(new Date(order.created_at))}</time>
+      </div>
+      <p className="mt-1 text-sm font-semibold text-neutral-700">Cash pickup · ${order.total.toFixed(2)}</p>
 
-      <ul className="mt-3 flex flex-col gap-1">
+      <ul className="mt-3 flex flex-col gap-2">
         {items.map((item) => (
-          <li key={item.id} className="text-sm">
-            <span className="font-medium">
+          <li key={item.id} className="rounded-lg bg-sand-50 p-2 text-base">
+            <span className="font-semibold text-ink-900">
               {item.quantity}× {item.item_name}
             </span>
             {item.special_instructions && (
-              <span className="block text-neutral-500">{item.special_instructions}</span>
+              <span className="mt-1 block rounded-md border-l-4 border-sunset-500 bg-sunset-50 px-2 py-1 text-sm font-medium text-ink-800">
+                Note: {item.special_instructions}
+              </span>
             )}
           </li>
         ))}

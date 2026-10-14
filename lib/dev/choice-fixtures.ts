@@ -198,11 +198,11 @@ export function fixtureTrackedOrderStatus(id: string, token: string): Pick<Order
   return order ? { status: order.status, updated_at: order.updated_at } : null;
 }
 
-export function fixtureOwnerOrders(start?: string, end?: string): Order[] {
+export function fixtureOwnerOrders(start?: string, end?: string): OrderWithItems[] {
   return state().orders
     .filter((row) => (!start || row.created_at >= start) && (!end || row.created_at < end))
-    .map(({ order_items: _items, trackingTokenHash: _token, ...order }) => ({ ...order }))
-    .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    .map(({ trackingTokenHash: _token, ...order }) => structuredClone(order))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
 export function fixtureOwnerActiveOrders(): OrderWithItems[] {

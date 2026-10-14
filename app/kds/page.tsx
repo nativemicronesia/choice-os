@@ -22,6 +22,8 @@ function removeKey(record: Record<string, Ticket>, key: string): Record<string, 
 
 export default function KdsPage() {
   const [tickets, setTickets] = useState<Record<string, Ticket>>({});
+  const [ticketsLoaded, setTicketsLoaded] = useState(false);
+  const [refreshError, setRefreshError] = useState<string | null>(null);
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(() => new Set());
   const [updateError, setUpdateError] = useState<string | null>(null);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
@@ -33,9 +35,12 @@ export default function KdsPage() {
 
   useEffect(() => {
     let cancelled = false;
+    let refreshInProgress = false;
     let knownIds = new Set<string>();
     let initialized = false;
     const refresh = async () => {
+      if (cancelled || refreshInProgress) return;
+      refreshInProgress = true;
       try {
         const orders = await getOwnerActiveTickets();
         if (cancelled) return;
@@ -49,8 +54,14 @@ export default function KdsPage() {
         knownIds = new Set(orders.map(({ id }) => id));
         initialized = true;
         setTickets(next);
+        setTicketsLoaded(true);
+        setRefreshError(null);
       } catch {
-        // Retain existing tickets when the local connection briefly drops.
+        if (cancelled) return;
+        setTicketsLoaded(true);
+        setRefreshError("Kitchen tickets could not refresh. Showing the last loaded tickets.");
+      } finally {
+        refreshInProgress = false;
       }
     };
 
@@ -125,6 +136,8 @@ export default function KdsPage() {
     <OsShell title="Kitchen" subtitle="Advance tickets as food moves" active="kitchen">
       {!soundUnlocked && <SoundUnlockOverlay onUnlock={unlockSound} />}
       {updateError ? <p role="alert" className="mb-3 text-sm text-red-700">{updateError}</p> : null}
+      {refreshError ? <p role="status" className="mb-3 text-sm text-amber-800">{refreshError}</p> : null}
+      {!ticketsLoaded ? <p role="status" className="mb-3 text-sm text-neutral-500">Loading kitchen tickets…</p> : null}
       <TicketBoard tickets={Object.values(tickets)} updatingOrderIds={updatingOrderIds} onAdvance={handleAdvance} />
     </OsShell>
   );
