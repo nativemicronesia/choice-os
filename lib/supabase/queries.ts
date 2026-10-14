@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/client";
+import { fixtureMenu, fixtureSpecials, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
 import type { DailySpecial, MenuItem } from "@/lib/types/database";
 
 // PostgREST's JSON encoding for `numeric`/`decimal` columns isn't worth
@@ -12,6 +13,7 @@ function toDailySpecial(row: DailySpecial): DailySpecial {
 }
 /** Dishes Turay marked available for today's online board. */
 export async function getTodaysMenuItems(): Promise<MenuItem[]> {
+  if (isChoiceFixtureMode()) return fixtureMenu(true);
   const { data, error } = await createClient()
     .from("menu_items")
     .select("*")
@@ -23,6 +25,7 @@ export async function getTodaysMenuItems(): Promise<MenuItem[]> {
 }
 
 export async function getActiveDailySpecials(): Promise<DailySpecial[]> {
+  if (isChoiceFixtureMode()) return fixtureSpecials(true);
   const { data, error } = await createClient()
     .from("daily_specials")
     .select("*")

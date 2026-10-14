@@ -3,6 +3,16 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  fixtureMenu,
+  fixtureOwnerActiveOrders,
+  fixtureOwnerOrder,
+  fixtureOwnerOrders,
+  fixtureSpecials,
+  fixtureTrackedOrder,
+  fixtureTrackedOrderStatus,
+  isChoiceFixtureMode,
+} from "@/lib/dev/choice-fixtures";
 import type { Order, OrderItem, OrderWithItems } from "@/lib/types/database";
 
 const TRACKING_COOKIE = "choice_order_access";
@@ -24,6 +34,11 @@ export async function getTrackedOrder(id: string): Promise<TrackedOrder | null> 
   if (!UUID.test(id)) return null;
   const token = (await cookies()).get(TRACKING_COOKIE)?.value;
   if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+
+  if (isChoiceFixtureMode()) {
+    const order = fixtureTrackedOrder(id, token);
+    return order ? { order, realtimeTopic: "" } : null;
+  }
 
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const { data, error } = await createAdminClient()
@@ -48,6 +63,7 @@ export async function getTrackedOrderStatus(id: string): Promise<Pick<Order, "st
   if (!UUID.test(id)) return null;
   const token = (await cookies()).get(TRACKING_COOKIE)?.value;
   if (!token || !/^[A-Za-z0-9_-]{40,60}$/.test(token)) return null;
+  if (isChoiceFixtureMode()) return fixtureTrackedOrderStatus(id, token);
   const tokenHash = createHash("sha256").update(token).digest("hex");
   const { data, error } = await createAdminClient()
     .from("orders")
@@ -61,6 +77,7 @@ export async function getTrackedOrderStatus(id: string): Promise<Pick<Order, "st
 
 export async function getOwnerOrderWithItems(id: string): Promise<OrderWithItems | null> {
   if (!UUID.test(id)) return null;
+  if (isChoiceFixtureMode()) return fixtureOwnerOrder(id);
   const { data, error } = await createAdminClient()
     .from("orders")
     .select("*, order_items(*)")
@@ -71,6 +88,7 @@ export async function getOwnerOrderWithItems(id: string): Promise<OrderWithItems
 }
 
 export async function getOwnerActiveOrders(): Promise<OrderWithItems[]> {
+  if (isChoiceFixtureMode()) return fixtureOwnerActiveOrders();
   const { data, error } = await createAdminClient()
     .from("orders")
     .select("*, order_items(*)")
@@ -81,6 +99,7 @@ export async function getOwnerActiveOrders(): Promise<OrderWithItems[]> {
 }
 
 export async function getOwnerTodaysOrders(start: string, end: string): Promise<Order[]> {
+  if (isChoiceFixtureMode()) return fixtureOwnerOrders(start, end);
   const { data, error } = await createAdminClient()
     .from("orders")
     .select("id,status,total,created_at,updated_at,customer_name")
@@ -91,6 +110,7 @@ export async function getOwnerTodaysOrders(start: string, end: string): Promise<
 }
 
 export async function getOwnerMenuItems() {
+  if (isChoiceFixtureMode()) return fixtureMenu(false);
   const { data, error } = await createAdminClient()
     .from("menu_items")
     .select("*")
@@ -104,6 +124,7 @@ export async function getOwnerMenuItems() {
 }
 
 export async function getOwnerDailySpecials() {
+  if (isChoiceFixtureMode()) return fixtureSpecials(false);
   const { data, error } = await createAdminClient()
     .from("daily_specials")
     .select("*")
@@ -116,6 +137,7 @@ export async function getOwnerDailySpecials() {
 }
 
 export async function getOwnerKitchenTopic(): Promise<string> {
+  if (isChoiceFixtureMode()) return "";
   const { data, error } = await createAdminClient()
     .from("order_realtime_settings")
     .select("topic_token")

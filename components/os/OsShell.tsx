@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LogOut } from "lucide-react";
+import { DataModeNotice } from "@/components/shared/DataModeNotice";
 
 export type OsTab = "menu" | "kitchen" | "day";
 
@@ -16,6 +17,7 @@ export function OsShell({
 }) {
   return (
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col bg-sand-50">
+      <DataModeNotice />
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-sand-200 bg-sand-50/90 px-4 py-3 backdrop-blur">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-ink-500">Choice OS</p>

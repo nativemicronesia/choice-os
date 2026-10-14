@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireOwnerSession } from "@/lib/auth/require";
 import { ALLOWED_TRANSITIONS } from "@/lib/orders/transitions";
 import type { OrderStatus } from "@/lib/types/database";
+import { fixtureAdvanceOrder, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
 
 export async function updateOrderStatus(
   orderId: string,
@@ -13,6 +14,12 @@ export async function updateOrderStatus(
   await requireOwnerSession();
   if (ALLOWED_TRANSITIONS[expectedCurrentStatus] !== nextStatus) {
     return { success: false, error: `Illegal transition ${expectedCurrentStatus} -> ${nextStatus}` };
+  }
+
+  if (isChoiceFixtureMode()) {
+    return fixtureAdvanceOrder(orderId, expectedCurrentStatus, nextStatus)
+      ? { success: true }
+      : { success: false, error: "Ticket already updated elsewhere" };
   }
 
   const { data, error } = await createAdminClient()

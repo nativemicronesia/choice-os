@@ -5,12 +5,24 @@ import { requireOwnerSession } from "@/lib/auth/require";
 import { CATEGORIES, type Category } from "@/lib/types/database";
 import { MENU_PHOTOS_BUCKET, removeStorageObjectForUrl } from "@/lib/supabase/storage";
 import { revalidatePath } from "next/cache";
+import {
+  fixtureDeleteMenu,
+  fixtureSetMenuAvailability,
+  fixtureUpsertMenu,
+  isChoiceFixtureMode,
+} from "@/lib/dev/choice-fixtures";
 
 export async function toggleMenuItemAvailability(
   itemId: string,
   isAvailable: boolean,
 ): Promise<{ success: true } | { success: false; error: string }> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) {
+    if (!fixtureSetMenuAvailability(itemId, isAvailable)) return { success: false, error: "Menu item not found" };
+    revalidatePath("/");
+    revalidatePath("/os/menu");
+    return { success: true };
+  }
   const { error } = await createAdminClient()
     .from("menu_items")
     .update({ is_available: isAvailable })
@@ -33,9 +45,15 @@ export type MenuItemInput = {
 };
 
 function validateMenuInput(input: MenuItemInput): string | null {
-  if (!input.name.trim()) return "Name is required";
+  if (!input.name.trim() || input.name.trim().length > 120) return "Name is required (up to 120 characters)";
   if (!CATEGORIES.includes(input.category as Category)) return "Invalid category";
-  if (!(input.price >= 0) || Number.isNaN(input.price)) return "Price must be 0 or more";
+  if (!Number.isFinite(input.price) || input.price < 0 || input.price > 99_999_999.99) {
+    return "Price must be between 0 and 99,999,999.99";
+  }
+  if (Math.abs(input.price * 100 - Math.round(input.price * 100)) > 0.000001) {
+    return "Price must use no more than two decimal places";
+  }
+  if (input.description && input.description.length > 1000) return "Description is too long";
   return null;
 }
 
@@ -45,6 +63,21 @@ export async function upsertMenuItem(
   await requireOwnerSession();
   const invalid = validateMenuInput(input);
   if (invalid) return { success: false, error: invalid };
+
+  if (isChoiceFixtureMode()) {
+    const saved = fixtureUpsertMenu({
+      id: input.id ?? crypto.randomUUID(),
+      name: input.name.trim(),
+      category: input.category,
+      description: input.description?.trim() || null,
+      price: input.price,
+      image_url: input.image_url?.trim() || null,
+      is_available: input.is_available,
+    });
+    revalidatePath("/");
+    revalidatePath("/os/menu");
+    return { success: true, id: saved.id };
+  }
 
   const admin = createAdminClient();
   const row = {
@@ -91,6 +124,13 @@ export async function deleteMenuItem(
   itemId: string,
 ): Promise<{ success: true } | { success: false; error: string }> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) {
+    const deleted = fixtureDeleteMenu(itemId);
+    if (!deleted) return { success: false, error: "Menu item not found" };
+    revalidatePath("/");
+    revalidatePath("/os/menu");
+    return { success: true };
+  }
   const admin = createAdminClient();
 
   const { data: existing } = await admin
@@ -118,6 +158,7 @@ export async function uploadMenuItemPhoto(
   formData: FormData,
 ): Promise<{ success: true; url: string } | { success: false; error: string }> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) return { success: false, error: "Photo uploads are not available in fixture mode" };
   const file = formData.get("file");
   if (!(file instanceof File)) return { success: false, error: "No file provided" };
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -140,5 +181,6 @@ export async function uploadMenuItemPhoto(
 
 export async function deleteMenuItemPhoto(url: string): Promise<void> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) return;
   await removeStorageObjectForUrl(createAdminClient(), url);
 }

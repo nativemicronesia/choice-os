@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getTrackedOrder } from "@/lib/supabase/private-orders";
 import { OrderStatusTracker } from "@/components/order/OrderStatusTracker";
+import { DataModeNotice } from "@/components/shared/DataModeNotice";
 
 // See app/(shop)/page.tsx — no Supabase project exists yet, force on-request
 // rendering so `next build` doesn't try (and fail) to prerender this.
@@ -12,8 +13,11 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   if (!tracked) notFound();
 
   return (
-    <main className="mx-auto max-w-2xl px-4 pb-24 pt-6">
-      <OrderStatusTracker initialOrder={tracked.order} realtimeTopic={tracked.realtimeTopic} />
-    </main>
+    <>
+      <DataModeNotice />
+      <main className="mx-auto max-w-2xl px-4 pb-24 pt-6">
+        <OrderStatusTracker initialOrder={tracked.order} realtimeTopic={tracked.realtimeTopic} />
+      </main>
+    </>
   );
 }

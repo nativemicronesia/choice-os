@@ -55,19 +55,24 @@ export default function KdsPage() {
     void refresh();
     let supabase: ReturnType<typeof createClient> | null = null;
     let channel: RealtimeChannel | null = null;
-    void getOwnerKitchenRealtimeTopic().then((topic) => {
-      if (cancelled) return;
-      supabase = createClient();
-      channel = supabase
-        .channel(topic, { config: { private: true } })
-        .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
-        .subscribe((status) => {
-          if (status === "SUBSCRIBED") void refresh();
-        });
-    }).catch(() => {
-      // The periodic owner-checked refresh remains available if Realtime is down.
-    });
-    const interval = window.setInterval(refresh, 30_000);
+    if (process.env.NEXT_PUBLIC_CHOICE_DATA_MODE !== "fixtures") {
+      void getOwnerKitchenRealtimeTopic().then((topic) => {
+        if (cancelled) return;
+        supabase = createClient();
+        channel = supabase
+          .channel(topic, { config: { private: true } })
+          .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") void refresh();
+          });
+      }).catch(() => {
+        // The periodic owner-checked refresh remains available if Realtime is down.
+      });
+    }
+    const interval = window.setInterval(
+      refresh,
+      process.env.NEXT_PUBLIC_CHOICE_DATA_MODE === "fixtures" ? 2_000 : 30_000,
+    );
 
     return () => {
       cancelled = true;
@@ -77,16 +82,15 @@ export default function KdsPage() {
   }, []);
 
   async function handleAdvance(orderId: string, current: OrderStatus, next: OrderStatus) {
-    const result = await updateOrderStatus(orderId, current, next);
-    if (!result.success) {
-      // Lost a race with another tablet — soft-refresh just this ticket.
-      const fresh = await getOwnerTicket(orderId);
-      setTickets((prev) => {
-        if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
-        const { order_items, ...order } = fresh;
-        return { ...prev, [orderId]: { order, items: order_items } };
-      });
-    }
+    await updateOrderStatus(orderId, current, next);
+    // Refresh this ticket immediately; in fixture mode there is no Realtime stream,
+    // and in production this also reconciles races between kitchen tablets.
+    const fresh = await getOwnerTicket(orderId);
+    setTickets((prev) => {
+      if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
+      const { order_items, ...order } = fresh;
+      return { ...prev, [orderId]: { order, items: order_items } };
+    });
   }
 
   function unlockSound() {

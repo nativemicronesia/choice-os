@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { requireOwnerSession } from "@/lib/auth/require";
 import { MENU_PHOTOS_BUCKET, removeStorageObjectForUrl } from "@/lib/supabase/storage";
 import { revalidatePath } from "next/cache";
+import { fixtureUpsertSpecial, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
 
 export type DailySpecialInput = {
   id?: string;
@@ -18,9 +19,31 @@ export async function upsertDailySpecial(
   input: DailySpecialInput,
 ): Promise<{ success: true; id: string } | { success: false; error: string }> {
   await requireOwnerSession();
+  const title = input.title.trim();
+  if (!title || title.length > 120) return { success: false, error: "Title is required (up to 120 characters)" };
+  if (!Number.isFinite(input.price) || input.price < 0 || input.price > 99_999_999.99) {
+    return { success: false, error: "Price must be between 0 and 99,999,999.99" };
+  }
+  if (Math.abs(input.price * 100 - Math.round(input.price * 100)) > 0.000001) {
+    return { success: false, error: "Price must use no more than two decimal places" };
+  }
+  if (input.description && input.description.length > 1000) return { success: false, error: "Description is too long" };
+  if (isChoiceFixtureMode()) {
+    const saved = fixtureUpsertSpecial({
+      id: input.id ?? crypto.randomUUID(),
+      title,
+      description: input.description?.trim() || null,
+      price: input.price,
+      active: input.active,
+      image_url: input.image_url?.trim() || null,
+    });
+    revalidatePath("/");
+    revalidatePath("/os/day");
+    return { success: true, id: saved.id };
+  }
   const admin = createAdminClient();
   const row = {
-    title: input.title,
+    title,
     description: input.description,
     price: input.price,
     active: input.active,
@@ -65,6 +88,7 @@ export async function uploadDailySpecialPhoto(
   formData: FormData,
 ): Promise<{ success: true; url: string } | { success: false; error: string }> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) return { success: false, error: "Photo uploads are not available in fixture mode" };
   const file = formData.get("file");
   if (!(file instanceof File)) return { success: false, error: "No file provided" };
   if (!ALLOWED_TYPES.includes(file.type)) {
@@ -87,5 +111,6 @@ export async function uploadDailySpecialPhoto(
 
 export async function deleteDailySpecialPhoto(url: string): Promise<void> {
   await requireOwnerSession();
+  if (isChoiceFixtureMode()) return;
   await removeStorageObjectForUrl(createAdminClient(), url);
 }

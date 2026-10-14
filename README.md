@@ -13,30 +13,27 @@ Next.js + Supabase (Postgres + Realtime).
   - **Kitchen** (`/kds`) — live tickets + chime
   - **Day** — today’s numbers + specials banner
 
-## Quick start
+## Quick start without a database
+
+Choice includes an explicit in-memory fixture mode for local workflow
+development. It uses the checked-in sample menu and specials, simulates order
+placement and owner edits, and resets changes when the app restarts. It does
+not verify Supabase migrations, RLS, storage, or Realtime delivery.
 
 ```bash
 cd /Users/dave/NMH/choice-os
 cp .env.example .env.local
-# Start an isolated local Supabase stack (no `supabase link` required).
-npm run db:start
-npm run db:reset
-# Copy the local API URL, anon key, and service-role key from `npx supabase status`
-# into .env.local. Do not use credentials from another NMH project.
-# set SESSION_SECRET, OWNER_EMAIL, OWNER_PASSWORD_HASH
+# Set CHOICE_DATA_MODE and NEXT_PUBLIC_CHOICE_DATA_MODE to `fixtures`.
+# Set SESSION_SECRET (at least 16 random characters) and OWNER_EMAIL.
 npm run hash-password -- 'choose-a-password'
-# paste hash into OWNER_PASSWORD_HASH
-npm install
+# Paste the generated hash into OWNER_PASSWORD_HASH.
 npm run dev
 ```
 
-`db:reset` applies the checked-in migrations and development seed to the local
-database. It discards local database data. Do not add `--linked` or point this
-workflow at a hosted project.
-
-The local database is managed by Supabase CLI and requires a compatible
-container runtime (Docker or Podman). See [docs/LOCAL-DEVELOPMENT.md](./docs/LOCAL-DEVELOPMENT.md)
-for runtime setup and verification details.
+Fixture mode requires no Supabase credentials or database service. Orders and
+owner edits live in app-process memory. Image uploads are unavailable. See
+[docs/LOCAL-DEVELOPMENT.md](./docs/LOCAL-DEVELOPMENT.md) for workflow details
+and verification boundaries.
 
 Dev: `npm run dev` (port 3003).
 

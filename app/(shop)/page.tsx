@@ -4,6 +4,7 @@ import { SpecialsBanner } from "@/components/shop/SpecialsBanner";
 import { MenuBrowser } from "@/components/shop/MenuBrowser";
 import { ShopHeader } from "@/components/shop/ShopHeader";
 import { Hero } from "@/components/shop/Hero";
+import { DataModeNotice } from "@/components/shared/DataModeNotice";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function ShopPage() {
 
   return (
     <>
+      <DataModeNotice />
       <ShopHeader />
       <Hero />
       <main id="menu" className="mx-auto max-w-2xl px-4 pb-24 pt-6">

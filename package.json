@@ -12,7 +12,8 @@
     "db:stop": "supabase stop",
     "generate:chime": "node scripts/generate-chime.mjs",
     "hash-password": "tsx scripts/hash-password.ts",
-    "test:order-flow": "tsx scripts/test-order-flow.ts"
+    "test:order-flow": "tsx scripts/test-order-flow.ts",
+    "test:fixtures": "node --conditions=react-server --import tsx --test scripts/test-choice-fixtures.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

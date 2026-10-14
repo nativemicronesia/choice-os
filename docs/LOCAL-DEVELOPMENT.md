@@ -1,88 +1,60 @@
-# Isolated local development
+# Local development and fixture verification
 
-Choice uses the Supabase CLI's local stack. Do not link this checkout to an NMH
-hosted project for development. The local Supabase API is configured on
-`127.0.0.1:54321`, with Postgres on `127.0.0.1:54322` in `supabase/config.toml`.
+Use Choice's in-memory fixtures for app workflow work when no Choice development
+database is available. This mode uses the menu and daily-special examples from
+`supabase/seed.sql`, while keeping orders and owner edits in process memory.
+Restarting the Next.js server resets all fixture changes.
 
-## Start the database
-
-Install a container runtime supported by the current Supabase CLI (Docker or
-Podman), then run:
+## Run with fixtures
 
 ```bash
-npm run db:start
-npm run db:reset
-npx supabase status
+cd /Users/dave/NMH/choice-os
+cp .env.example .env.local
 ```
 
-`db:reset` rebuilds the local database from the committed migrations and
-`supabase/seed.sql`; it discards local data and test orders. Copy the local API
-URL, anon key, and service-role key shown by `supabase status` into `.env.local`.
-Use only values from the local stack. Do not use `supabase link`, `db push`,
-`--linked`, or an NMH project's URL or keys in this workflow.
+In `.env.local`, set:
 
-Set `NEXT_PUBLIC_SITE_URL=http://localhost:3003`, `SESSION_SECRET` (at least 16
-random characters), `OWNER_EMAIL`, and an `OWNER_PASSWORD_HASH` generated with
-`npm run hash-password`. Keep `.env.local` untracked.
-
-## Run and check the app
-
-```bash
-npm run dev
-npm run test:order-flow
+```dotenv
+NEXT_PUBLIC_SITE_URL=http://localhost:3003
+CHOICE_DATA_MODE=fixtures
+NEXT_PUBLIC_CHOICE_DATA_MODE=fixtures
+SESSION_SECRET=<random string of at least 16 characters>
+OWNER_EMAIL=owner@example.test
+OWNER_PASSWORD_HASH=<hash generated below>
 ```
 
-The local order-flow check expects the app at `http://localhost:3003` and
-refuses Supabase URLs outside loopback on port 54321. It uses a seeded available
-menu item, creates one temporary development order through the app, checks the
-stored total and item price against the database menu, verifies anonymous order
-reads and raw inserts are denied, checks the tracking-cookie boundary, and
-deletes its test order afterward.
+Generate a development-only owner password hash with `npm run hash-password --
+'your-development-password'`, paste it into `OWNER_PASSWORD_HASH`, then run
+`npm run dev`. The owner session and owner-only Server Action checks remain in
+place in fixture mode. Do not reuse production credentials. No Supabase URL,
+key, project, account, or database is needed.
 
-To include the successful owner-login check, set `CHOICE_LOCAL_TEST_EMAIL` and
-`CHOICE_LOCAL_TEST_PASSWORD` to the development-only owner credentials used by
-the running local app. Do not put production credentials in test commands.
+Open `http://localhost:3003` to browse the menu and specials, add food and
+quantities to the cart, submit a cash pickup order, and follow its private
+tracking link. Sign in at `/login` to edit the menu and specials, open `/kds` to
+advance the ticket, and review daily totals under `/os/day`. The fixture banner
+labels the simulated data on customer and owner pages. Kitchen, owner totals,
+and customer status refresh every two seconds; Supabase Realtime is not
+connected in fixture mode. Photo storage uploads are unavailable.
 
-To inspect the local schema and migration status, use:
+The fixture store validates item availability and quantities, copies the menu's
+current name and price at checkout, calculates the total server-side, and adds
+the order and lines together only after every line validates. Tracking reads
+require the HttpOnly order capability cookie, and owner reads/mutations still
+require the signed owner session. This exercises application behavior only; it
+does not prove SQL atomicity, RLS, migrations, Supabase Auth, storage, or
+Realtime policies.
 
-```bash
-npx supabase migration list --local
-npm run db:stop
-```
+## Database verification boundary
 
-## Access boundaries
+The Supabase migrations and `scripts/test-order-flow.ts` remain available for an
+authorized, isolated Choice development database. The current workspace toolbelt
+records the Choice Supabase reference as mismatched and authority-uncertain, and
+Supabase CLI access as requiring human authentication. NWA's database belongs
+to NWA and must not be used as Choice's data source. No live database was queried
+or modified for fixture development. Database connection, migration application,
+RLS behavior, and real-time delivery remain unverified here.
 
-- Menu items and active specials are public reads.
-- Orders and order items have no anon or authenticated read/write policy.
-- Checkout calls the server-only `place_pickup_order` RPC. The SQL function
-  validates availability and quantity, snapshots current menu names/prices,
-  calculates the total, and writes the order and items in one transaction.
-- The server returns an HttpOnly cookie scoped to `/order/<id>`. The database
-  stores only its SHA-256 hash. A tracker page or status refresh must match both
-  the order ID and that hash before reading.
-- Owner order/menu reads and all owner mutations require the existing owner
-  session before the server uses the service-role client.
-- Direct browser `postgres_changes` subscriptions to orders have been removed.
-  KDS and the owner day card use a private Broadcast topic disclosed by an
-  owner-checked server action. The customer's topic is derived from the stored
-  tracking-token hash. RLS on `realtime.messages` accepts only those current
-  topic capabilities. Broadcasts contain order IDs/statuses for the kitchen or
-  status/timestamp for one customer; private names and line items stay behind
-  server-side reads. Server actions refresh snapshots and fall back to a
-  30-second refresh if the WebSocket drops. The existing publication stays in
-  place but browser clients do not subscribe to its row changes.
-
-The current environment is an Intel Mac on macOS Monterey. Supabase's native
-local runtime is not supported there, so a container runtime is required. The
-current Podman 5 runtime initializes a machine but its bundled `vfkit` refuses
-to boot on Monterey (`unsupported macOS version`). Current Rancher Desktop also
-requires macOS 13 or newer. The local database stack therefore remains blocked
-on this host until it has a supported container runtime or a newer compatible
-macOS version. Podman 4.9.3 has been reported as a QEMU workaround for Monterey,
-but its package signature did not verify on this host and it was not run.
-
-Once a supported runtime is available, the local stack also needs network
-access to fetch its service images the first time it starts. Browser automation
-is not included in this prototype's package; `test:order-flow` is an HTTP plus
-database smoke test, not a visual browser test. A manual responsive browser
-pass remains to be completed when the local services are running.
+NMH's established browser-control MCP is unavailable to this Codex session, so
+this change should be visually checked in the visible browser route when it is
+available. Do not substitute a new automation/control route.

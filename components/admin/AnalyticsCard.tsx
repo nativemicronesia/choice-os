@@ -18,24 +18,29 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
         // Keep the last known totals when temporarily offline.
       }
     };
-    const supabase = createClient();
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    void getOwnerKitchenRealtimeTopic().then((topic) => {
-      if (!active) return;
-      channel = supabase
-        .channel(topic, { config: { private: true } })
-        .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
-        .subscribe((status) => {
-          if (status === "SUBSCRIBED") void refresh();
-        });
-    }).catch(() => {
-      // Keep the periodic owner-checked refresh as a fallback.
-    });
-    const interval = window.setInterval(refresh, 30_000);
+    const supabase = process.env.NEXT_PUBLIC_CHOICE_DATA_MODE === "fixtures" ? null : createClient();
+    let channel: ReturnType<NonNullable<typeof supabase>["channel"]> | null = null;
+    if (supabase) {
+      void getOwnerKitchenRealtimeTopic().then((topic) => {
+        if (!active) return;
+        channel = supabase
+          .channel(topic, { config: { private: true } })
+          .on("broadcast", { event: "choice_order_changed" }, () => void refresh())
+          .subscribe((status) => {
+            if (status === "SUBSCRIBED") void refresh();
+          });
+      }).catch(() => {
+        // Keep the periodic owner-checked refresh as a fallback.
+      });
+    }
+    const interval = window.setInterval(
+      refresh,
+      process.env.NEXT_PUBLIC_CHOICE_DATA_MODE === "fixtures" ? 2_000 : 30_000,
+    );
     return () => {
       active = false;
       window.clearInterval(interval);
-      if (channel) void supabase.removeChannel(channel);
+      if (channel && supabase) void supabase.removeChannel(channel);
     };
   }, []);
 

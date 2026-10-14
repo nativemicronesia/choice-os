@@ -36,9 +36,9 @@ export function OrderStatusTracker({
         // Keep the last known status while the customer is offline.
       }
     };
-    const supabase = createClient();
+    const supabase = process.env.NEXT_PUBLIC_CHOICE_DATA_MODE === "fixtures" ? null : createClient();
     const channel = supabase
-      .channel(realtimeTopic, { config: { private: true } })
+      ?.channel(realtimeTopic, { config: { private: true } })
       .on("broadcast", { event: "choice_order_status" }, ({ payload }) => {
         const next = payload as { status?: OrderStatus; updated_at?: string };
         if (!next.status || !STEPS.includes(next.status) || !next.updated_at) return;
@@ -46,11 +46,14 @@ export function OrderStatusTracker({
       })
       .subscribe();
     // Keep tracking resilient if a mobile connection drops its WebSocket.
-    const interval = window.setInterval(refresh, 30_000);
+    const interval = window.setInterval(
+      refresh,
+      process.env.NEXT_PUBLIC_CHOICE_DATA_MODE === "fixtures" ? 2_000 : 30_000,
+    );
     return () => {
       active = false;
       window.clearInterval(interval);
-      void supabase.removeChannel(channel);
+      if (supabase && channel) void supabase.removeChannel(channel);
     };
   }, [initialOrder.id, realtimeTopic]);
 

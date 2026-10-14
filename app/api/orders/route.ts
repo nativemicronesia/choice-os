@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { fixturePlaceOrder, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
 
 type CheckoutLine = { menuItemId?: unknown; quantity?: unknown; specialInstructions?: unknown };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -50,6 +51,29 @@ export async function POST(request: Request) {
 
   const accessToken = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(accessToken).digest("hex");
+  if (isChoiceFixtureMode()) {
+    try {
+      const orderId = fixturePlaceOrder({
+        name,
+        items,
+        trackingTokenHash: tokenHash,
+      });
+      const response = NextResponse.json({ orderId }, { status: 201 });
+      const secure = new URL(request.url).protocol === "https:" ? "; Secure" : "";
+      response.headers.append(
+        "Set-Cookie",
+        `choice_order_access=${accessToken}; Path=/order/${orderId}; HttpOnly; SameSite=Lax; Max-Age=86400${secure}`,
+      );
+      response.headers.set("Cache-Control", "no-store");
+      return response;
+    } catch {
+      return NextResponse.json(
+        { error: "Your order could not be placed. Please refresh the menu and try again." },
+        { status: 409 },
+      );
+    }
+  }
+
   const { data, error } = await createAdminClient().rpc("place_pickup_order", {
     p_customer_name: name,
     p_items: items,
