@@ -12,15 +12,15 @@ export default async function OsDayPage() {
   ]);
 
   return (
-    <OsShell title="Day" subtitle="Today's numbers and specials banner" active="day">
+    <OsShell title="Day" subtitle="Sales, order activity, and specials" active="day">
       <section>
         <AnalyticsCard initialOrders={todaysOrders} />
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold">Daily specials</h2>
+        <h2 className="text-lg font-semibold">Daily &amp; weekly specials</h2>
         <p className="mt-1 text-sm text-neutral-500">
-          Shown as a banner on the storefront. Separate from today&apos;s dish board.
+          Active specials appear on the storefront on their scheduled days, separately from today&apos;s dish board.
         </p>
         <div className="mt-3">
           <SpecialsList specials={specials} />

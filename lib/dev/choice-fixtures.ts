@@ -52,8 +52,9 @@ const initialState = (): FixtureState => ({
     item("40000000-0000-4000-8000-000000000004", "Tropical Punch", "Cold Drinks", "House-made, 16 oz", 1.75),
   ],
   specials: [
-    { id: "50000000-0000-4000-8000-000000000001", title: "Friday Fish Fry", description: "Whole fried reef fish, rice, and slaw — Fridays only", price: 8, active: true, image_url: null, created_at: FIXED_CREATED_AT },
-    { id: "50000000-0000-4000-8000-000000000002", title: "Sunday Chicken Special", description: "Half BBQ chicken with two sides", price: 7, active: false, image_url: null, created_at: FIXED_CREATED_AT },
+    { id: "50000000-0000-4000-8000-000000000001", title: "Daily BBQ Lunch Plate", description: "BBQ chicken, rice, and slaw", price: 6.5, active: true, frequency: "daily", weekdays: [], image_url: null, created_at: FIXED_CREATED_AT },
+    { id: "50000000-0000-4000-8000-000000000002", title: "Friday Fish Fry", description: "Whole fried reef fish, rice, and slaw — Fridays only", price: 8, active: true, frequency: "weekly", weekdays: [5], image_url: null, created_at: FIXED_CREATED_AT },
+    { id: "50000000-0000-4000-8000-000000000003", title: "Sunday Chicken Special", description: "Half BBQ chicken with two sides", price: 7, active: false, frequency: "weekly", weekdays: [0], image_url: null, created_at: FIXED_CREATED_AT },
   ],
   orders: [],
 });

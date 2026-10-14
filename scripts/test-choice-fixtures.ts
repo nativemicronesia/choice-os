@@ -7,9 +7,13 @@ import {
   fixtureOwnerActiveOrders,
   fixturePlaceOrder,
   fixtureSetMenuAvailability,
+  fixtureUpsertMenu,
+  fixtureUpsertSpecial,
   fixtureTrackedOrder,
+  fixtureSpecials,
   isChoiceFixtureMode,
 } from "@/lib/dev/choice-fixtures";
+import { isSpecialScheduledForWeekday } from "@/lib/specials/schedule";
 
 test("fixtures support a private, server-priced pickup order through kitchen pickup", () => {
   assert.equal(isChoiceFixtureMode(), true);
@@ -28,6 +32,7 @@ test("fixtures support a private, server-priced pickup order through kitchen pic
   assert.equal(tracked.total, 9);
   assert.equal(tracked.order_items[0]?.price_at_time, dish.price);
   assert.equal(tracked.order_items[0]?.quantity, 2);
+  assert.equal(tracked.order_items[0]?.special_instructions, "No onions");
   assert.equal("trackingTokenHash" in tracked, false);
   assert.equal(fixtureTrackedOrder(orderId, "wrong-capability"), null);
 
@@ -40,10 +45,45 @@ test("fixtures support a private, server-priced pickup order through kitchen pic
   assert.equal(fixtureOwnerActiveOrders().some((ticket) => ticket.id === orderId), false);
   assert.equal(fixtureTrackedOrder(orderId, trackingToken)?.status, "completed");
 
+  const daily = fixtureSpecials(true).find((special) => special.frequency === "daily");
+  const friday = fixtureSpecials(true).find((special) => special.frequency === "weekly");
+  assert.ok(daily && friday);
+  assert.equal(isSpecialScheduledForWeekday(daily, 0), true);
+  assert.equal(isSpecialScheduledForWeekday(friday, 5), true);
+  assert.equal(isSpecialScheduledForWeekday(friday, 4), false);
+
+  const newDish = fixtureUpsertMenu({
+    id: "60000000-0000-4000-8000-000000000001",
+    name: "Test platter",
+    category: "Local Specials",
+    description: null,
+    price: 12,
+    image_url: null,
+    is_available: false,
+  });
+  assert.equal(fixtureMenu(true).some((entry) => entry.id === newDish.id), false);
+  fixtureUpsertMenu({ ...newDish, price: 13, is_available: true });
+  assert.equal(fixtureMenu(true).find((entry) => entry.id === newDish.id)?.price, 13);
+
+  const weekly = fixtureUpsertSpecial({
+    id: "70000000-0000-4000-8000-000000000001",
+    title: "Saturday combo",
+    description: null,
+    price: 11,
+    active: true,
+    frequency: "weekly",
+    weekdays: [6],
+    image_url: null,
+  });
+  assert.equal(isSpecialScheduledForWeekday(weekly, 6), true);
+  assert.equal(isSpecialScheduledForWeekday(weekly, 5), false);
+
+  const activeCountBeforeUnavailableAttempt = fixtureOwnerActiveOrders().length;
   fixtureSetMenuAvailability(dish.id, false);
   assert.throws(() => fixturePlaceOrder({
     name: "Unavailable Item",
     items: [{ item_id: dish.id, quantity: 1, special_instructions: null }],
     trackingTokenHash: createHash("sha256").update(randomBytes(32)).digest("hex"),
   }));
+  assert.equal(fixtureOwnerActiveOrders().length, activeCountBeforeUnavailableAttempt);
 });

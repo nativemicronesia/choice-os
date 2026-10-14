@@ -12,6 +12,8 @@ export type DailySpecialInput = {
   description: string | null;
   price: number;
   active: boolean;
+  frequency: "daily" | "weekly";
+  weekdays: number[];
   image_url: string | null;
 };
 
@@ -19,6 +21,9 @@ export async function upsertDailySpecial(
   input: DailySpecialInput,
 ): Promise<{ success: true; id: string } | { success: false; error: string }> {
   await requireOwnerSession();
+  if (!input || typeof input !== "object" || typeof input.title !== "string") {
+    return { success: false, error: "Invalid special details" };
+  }
   const title = input.title.trim();
   if (!title || title.length > 120) return { success: false, error: "Title is required (up to 120 characters)" };
   if (!Number.isFinite(input.price) || input.price < 0 || input.price > 99_999_999.99) {
@@ -27,7 +32,24 @@ export async function upsertDailySpecial(
   if (Math.abs(input.price * 100 - Math.round(input.price * 100)) > 0.000001) {
     return { success: false, error: "Price must use no more than two decimal places" };
   }
+  if (input.description !== null && typeof input.description !== "string") {
+    return { success: false, error: "Invalid special description" };
+  }
   if (input.description && input.description.length > 1000) return { success: false, error: "Description is too long" };
+  if (typeof input.active !== "boolean" || (input.frequency !== "daily" && input.frequency !== "weekly")) {
+    return { success: false, error: "Invalid special schedule" };
+  }
+  if (!Array.isArray(input.weekdays)) return { success: false, error: "Invalid weekday selection" };
+  if (input.image_url !== null && typeof input.image_url !== "string") {
+    return { success: false, error: "Invalid special image" };
+  }
+  const weekdays = [...new Set(input.weekdays)];
+  if (input.frequency === "weekly" && (
+    weekdays.length < 1 || weekdays.some((day) => !Number.isInteger(day) || day < 0 || day > 6)
+  )) return { success: false, error: "Choose at least one valid weekday for a weekly special" };
+  if (input.frequency === "daily" && weekdays.length > 0) {
+    return { success: false, error: "Daily specials cannot have weekday restrictions" };
+  }
   if (isChoiceFixtureMode()) {
     const saved = fixtureUpsertSpecial({
       id: input.id ?? crypto.randomUUID(),
@@ -35,6 +57,8 @@ export async function upsertDailySpecial(
       description: input.description?.trim() || null,
       price: input.price,
       active: input.active,
+      frequency: input.frequency,
+      weekdays,
       image_url: input.image_url?.trim() || null,
     });
     revalidatePath("/");
@@ -47,6 +71,8 @@ export async function upsertDailySpecial(
     description: input.description,
     price: input.price,
     active: input.active,
+    frequency: input.frequency,
+    weekdays,
     image_url: input.image_url,
   };
 

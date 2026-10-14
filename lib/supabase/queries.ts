@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/client";
 import { fixtureMenu, fixtureSpecials, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
+import { chuukWeekday, isSpecialScheduledForWeekday } from "@/lib/specials/schedule";
 import type { DailySpecial, MenuItem } from "@/lib/types/database";
 
 // PostgREST's JSON encoding for `numeric`/`decimal` columns isn't worth
@@ -25,12 +26,17 @@ export async function getTodaysMenuItems(): Promise<MenuItem[]> {
 }
 
 export async function getActiveDailySpecials(): Promise<DailySpecial[]> {
-  if (isChoiceFixtureMode()) return fixtureSpecials(true);
+  const weekday = chuukWeekday();
+  if (isChoiceFixtureMode()) {
+    return fixtureSpecials(true).filter((special) => isSpecialScheduledForWeekday(special, weekday));
+  }
   const { data, error } = await createClient()
     .from("daily_specials")
     .select("*")
     .eq("active", true)
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return ((data ?? []) as DailySpecial[]).map(toDailySpecial);
+  return ((data ?? []) as DailySpecial[])
+    .map(toDailySpecial)
+    .filter((special) => isSpecialScheduledForWeekday(special, weekday));
 }

@@ -22,6 +22,8 @@ function removeKey(record: Record<string, Ticket>, key: string): Record<string, 
 
 export default function KdsPage() {
   const [tickets, setTickets] = useState<Record<string, Ticket>>({});
+  const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(() => new Set());
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -82,15 +84,27 @@ export default function KdsPage() {
   }, []);
 
   async function handleAdvance(orderId: string, current: OrderStatus, next: OrderStatus) {
-    await updateOrderStatus(orderId, current, next);
-    // Refresh this ticket immediately; in fixture mode there is no Realtime stream,
-    // and in production this also reconciles races between kitchen tablets.
-    const fresh = await getOwnerTicket(orderId);
-    setTickets((prev) => {
-      if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
-      const { order_items, ...order } = fresh;
-      return { ...prev, [orderId]: { order, items: order_items } };
-    });
+    if (updatingOrderIds.has(orderId)) return;
+    setUpdatingOrderIds((prev) => new Set(prev).add(orderId));
+    try {
+      const result = await updateOrderStatus(orderId, current, next);
+      setUpdateError(result.success ? null : result.error);
+      // Refresh immediately in fixture mode and reconcile races between tablets.
+      const fresh = await getOwnerTicket(orderId);
+      setTickets((prev) => {
+        if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
+        const { order_items, ...order } = fresh;
+        return { ...prev, [orderId]: { order, items: order_items } };
+      });
+    } catch {
+      setUpdateError("Ticket update failed. Try again.");
+    } finally {
+      setUpdatingOrderIds((prev) => {
+        const nextIds = new Set(prev);
+        nextIds.delete(orderId);
+        return nextIds;
+      });
+    }
   }
 
   function unlockSound() {
@@ -110,7 +124,8 @@ export default function KdsPage() {
   return (
     <OsShell title="Kitchen" subtitle="Advance tickets as food moves" active="kitchen">
       {!soundUnlocked && <SoundUnlockOverlay onUnlock={unlockSound} />}
-      <TicketBoard tickets={Object.values(tickets)} onAdvance={handleAdvance} />
+      {updateError ? <p role="alert" className="mb-3 text-sm text-red-700">{updateError}</p> : null}
+      <TicketBoard tickets={Object.values(tickets)} updatingOrderIds={updatingOrderIds} onAdvance={handleAdvance} />
     </OsShell>
   );
 }

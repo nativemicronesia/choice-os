@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { deleteMenuItem, toggleMenuItemAvailability } from "@/lib/actions/menu";
-import type { MenuItem } from "@/lib/types/database";
+import { CATEGORIES, type MenuItem } from "@/lib/types/database";
 import { DishEditorForm } from "./DishEditorForm";
 
 export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }) {
   const [items, setItems] = useState(initialItems);
   const [editingId, setEditingId] = useState<string | "new" | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
 
   const byCategory = items.reduce<Record<string, MenuItem[]>>((acc, item) => {
     (acc[item.category] ??= []).push(item);
@@ -23,18 +24,34 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
     setEditingId(null);
   }
 
+  const orderedCategories = CATEGORIES
+    .map((category) => [category, byCategory[category] ?? []] as const)
+    .filter(([, categoryItems]) => categoryItems.length > 0);
+
   async function handleToggle(item: MenuItem, next: boolean) {
+    setOperationError(null);
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_available: next } : i)));
-    const result = await toggleMenuItemAvailability(item.id, next);
-    if (!result.success) {
+    try {
+      const result = await toggleMenuItemAvailability(item.id, next);
+      if (result.success) return;
+      setOperationError(result.error);
+      setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_available: !next } : i)));
+    } catch {
+      setOperationError("Could not update availability. Try again.");
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, is_available: !next } : i)));
     }
   }
 
   async function handleDelete(item: MenuItem) {
     if (!confirm(`Remove “${item.name}” from the dish library?`)) return;
-    const result = await deleteMenuItem(item.id);
-    if (result.success) setItems((prev) => prev.filter((i) => i.id !== item.id));
+    setOperationError(null);
+    try {
+      const result = await deleteMenuItem(item.id);
+      if (result.success) setItems((prev) => prev.filter((i) => i.id !== item.id));
+      else setOperationError(result.error);
+    } catch {
+      setOperationError("Could not remove this dish. Try again.");
+    }
   }
 
   return (
@@ -56,13 +73,14 @@ export function TodaysMenuManager({ items: initialItems }: { items: MenuItem[] }
       {editingId === "new" ? (
         <DishEditorForm onSaved={upsertLocal} onCancel={() => setEditingId(null)} />
       ) : null}
+      {operationError ? <p role="alert" className="text-sm text-red-700">{operationError}</p> : null}
 
       {items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-sand-300 p-6 text-center text-sm text-ink-500">
           No dishes yet. Add today&apos;s platters to open the online board.
         </p>
       ) : (
-        Object.entries(byCategory).map(([category, categoryItems]) => (
+        orderedCategories.map(([category, categoryItems]) => (
           <div key={category}>
             <h2 className="text-sm font-semibold text-ink-500">{category}</h2>
             <div className="mt-2 flex flex-col gap-2">

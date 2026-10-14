@@ -1,8 +1,8 @@
 # Local development and fixture verification
 
 Use Choice's in-memory fixtures for app workflow work when no Choice development
-database is available. This mode uses the menu and daily-special examples from
-`supabase/seed.sql`, while keeping orders and owner edits in process memory.
+database is available. This mode uses the menu and daily/weekly-special examples
+from `supabase/seed.sql`, while keeping orders and owner edits in process memory.
 Restarting the Next.js server resets all fixture changes.
 
 ## Run with fixtures

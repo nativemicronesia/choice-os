@@ -1,6 +1,7 @@
 import Image from "next/image";
 import type { DailySpecial } from "@/lib/types/database";
 import { PlaceholderArt } from "./ItemImage";
+import { formatSpecialSchedule } from "@/lib/specials/schedule";
 
 export function SpecialsBanner({ specials }: { specials: DailySpecial[] }) {
   if (specials.length === 0) return null;
@@ -19,7 +20,7 @@ export function SpecialsBanner({ specials }: { specials: DailySpecial[] }) {
               <PlaceholderArt className="h-full w-full rounded-none" />
             )}
             <span className="absolute left-3 top-3 rounded-full bg-sunset-500 px-2.5 py-1 text-xs font-semibold text-white shadow">
-              Today&apos;s Special
+              {formatSpecialSchedule(special)}
             </span>
           </div>
           <div className="p-3">

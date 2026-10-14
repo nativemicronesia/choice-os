@@ -36,10 +36,12 @@ function formatElapsed(totalSeconds: number): string {
 export function TicketCard({
   order,
   items,
+  isUpdating,
   onAdvance,
 }: {
   order: Order;
   items: OrderItem[];
+  isUpdating: boolean;
   onAdvance: (next: OrderStatus) => void;
 }) {
   const elapsed = useElapsedSeconds(order.created_at);
@@ -52,6 +54,7 @@ export function TicketCard({
         <StatusBadge status={order.status} />
       </div>
       <p className="mt-1 text-sm text-neutral-500">{formatElapsed(elapsed)} elapsed</p>
+      <p className="mt-1 text-xs font-medium text-neutral-500">Cash pickup · ${order.total.toFixed(2)}</p>
 
       <ul className="mt-3 flex flex-col gap-1">
         {items.map((item) => (
@@ -70,9 +73,10 @@ export function TicketCard({
         <button
           type="button"
           onClick={() => onAdvance(next)}
-          className="mt-4 w-full rounded-lg bg-neutral-900 py-2 text-sm font-semibold text-white"
+          disabled={isUpdating}
+          className="mt-4 min-h-12 w-full rounded-lg bg-neutral-900 py-3 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-60"
         >
-          {ADVANCE_LABELS[order.status]}
+          {isUpdating ? "Updating…" : ADVANCE_LABELS[order.status]}
         </button>
       )}
     </div>

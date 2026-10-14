@@ -36,6 +36,9 @@
   'Cold Drinks'. Changing a tab label requires a data migration.
 - Daily board model: `menu_items` is Turay's dish library; `is_available`
   means "on today's online board." Storefront uses `getTodaysMenuItems()` only.
+- Special schedule: specials are either daily or weekly on selected weekdays.
+  Weekdays use Sunday=0 through Saturday=6 and customer visibility is resolved
+  in Chuuk time (UTC+10).
 - Mobile-first, low-bandwidth: Weno has weak mobile networks. No heavy client
   bundles, no unoptimized images, keep the customer path lean.
 - Env: dedicated Supabase project for choice-os — never share project/keys

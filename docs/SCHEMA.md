@@ -19,3 +19,8 @@ The follow-up `20261014150948_secure_order_realtime.sql` adds private Broadcast
 topics and an RLS join check on `realtime.messages`. Only the kitchen's
 server-disclosed topic and a customer's order-token-derived topic can join;
 messages carry no names or order-item details.
+
+The Phase 2 migration `20261015103000_schedule_daily_specials.sql` adds daily
+and weekly recurrence to specials. Weekly day numbers follow JavaScript's
+Sunday=0 through Saturday=6 convention and storefront visibility is evaluated
+in Chuuk time (UTC+10).

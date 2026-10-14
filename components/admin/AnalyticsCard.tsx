@@ -44,7 +44,7 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
     };
   }, []);
 
-  const { revenueToday, completedToday, activeTickets } = useMemo(() => {
+  const { revenueToday, completedToday, activeTickets, orderCount } = useMemo(() => {
     let revenue = 0;
     let completed = 0;
     let active = 0;
@@ -56,11 +56,15 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: Order[] }) {
         active += 1;
       }
     }
-    return { revenueToday: revenue, completedToday: completed, activeTickets: active };
+    return { revenueToday: revenue, completedToday: completed, activeTickets: active, orderCount: orders.length };
   }, [orders]);
 
   return (
-    <div className="grid grid-cols-3 gap-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="rounded-xl bg-white p-3 text-center shadow-sm">
+        <p className="text-2xl font-bold">{orderCount}</p>
+        <p className="text-xs text-neutral-500">Orders today</p>
+      </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
         <p className="text-2xl font-bold">${revenueToday.toFixed(2)}</p>
         <p className="text-xs text-neutral-500">Revenue today</p>

@@ -26,10 +26,11 @@ insert into menu_items (name, category, description, price) values
   ('Iced Tea',          'Cold Drinks', 'Unsweetened or sweet', 1.50),
   ('Tropical Punch',    'Cold Drinks', 'House-made, 16 oz', 1.75);
 
--- Daily specials — Banner Editor demo data: one live, one toggled off
-insert into daily_specials (title, description, price, active) values
-  ('Friday Fish Fry', 'Whole fried reef fish, rice, and slaw — Fridays only', 8.00, true),
-  ('Sunday Chicken Special', 'Half BBQ chicken with two sides', 7.00, false);
+-- Daily and weekly specials — development fixture examples.
+insert into daily_specials (title, description, price, active, frequency, weekdays) values
+  ('Daily BBQ Lunch Plate', 'BBQ chicken, rice, and slaw', 6.50, true, 'daily', '{}'),
+  ('Friday Fish Fry', 'Whole fried reef fish, rice, and slaw — Fridays only', 8.00, true, 'weekly', '{5}'),
+  ('Sunday Chicken Special', 'Half BBQ chicken with two sides', 7.00, false, 'weekly', '{0}');
 
 -- A few sample orders across statuses, for exercising KDS/analytics in Phase 2
 insert into orders (customer_name, status, total) values

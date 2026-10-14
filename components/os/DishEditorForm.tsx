@@ -27,30 +27,35 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
     setPending(true);
     setError(null);
     const parsedPrice = Number(price);
-    const result = await upsertMenuItem({
-      id: initial?.id,
-      name,
-      category,
-      description: description.trim() || null,
-      price: parsedPrice,
-      image_url: imageUrl,
-      is_available: isAvailable,
-    });
-    setPending(false);
-    if (!result.success) {
-      setError(result.error);
-      return;
+    try {
+      const result = await upsertMenuItem({
+        id: initial?.id,
+        name,
+        category,
+        description: description.trim() || null,
+        price: parsedPrice,
+        image_url: imageUrl,
+        is_available: isAvailable,
+      });
+      if (!result.success) {
+        setError(result.error);
+        return;
+      }
+      onSaved({
+        id: result.id,
+        name: name.trim(),
+        category,
+        description: description.trim() || null,
+        price: parsedPrice,
+        image_url: imageUrl,
+        is_available: isAvailable,
+        created_at: initial?.created_at ?? new Date().toISOString(),
+      });
+    } catch {
+      setError("Could not save this dish. Try again.");
+    } finally {
+      setPending(false);
     }
-    onSaved({
-      id: result.id,
-      name: name.trim(),
-      category,
-      description: description.trim() || null,
-      price: parsedPrice,
-      image_url: imageUrl,
-      is_available: isAvailable,
-      created_at: initial?.created_at ?? new Date().toISOString(),
-    });
   }
 
   return (
@@ -129,7 +134,7 @@ export function DishEditorForm({ initial, onSaved, onCancel }: Props) {
         />
         On today&apos;s board (orderable online)
       </label>
-      {error ? <p className="text-sm text-red-700">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
       <div className="flex gap-2">
         <button
           type="submit"
