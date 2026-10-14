@@ -10,6 +10,7 @@ const ADVANCE_LABELS: Record<OrderStatus, string> = {
   cooking: "Mark Ready for Pickup",
   ready: "Mark Picked Up",
   completed: "",
+  cancelled: "",
 };
 
 function useElapsedSeconds(createdAt: string): number {
@@ -44,11 +45,13 @@ export function TicketCard({
   items,
   isUpdating,
   onAdvance,
+  onCancel,
 }: {
   order: Order;
   items: OrderItem[];
   isUpdating: boolean;
   onAdvance: (next: OrderStatus) => void;
+  onCancel: () => void;
 }) {
   const elapsed = useElapsedSeconds(order.created_at);
   const next = nextStatus(order.status);
@@ -82,14 +85,26 @@ export function TicketCard({
       </ul>
 
       {next && (
-        <button
-          type="button"
-          onClick={() => onAdvance(next)}
-          disabled={isUpdating}
-          className="mt-4 min-h-12 w-full rounded-lg bg-neutral-900 py-3 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-60"
-        >
-          {isUpdating ? "Updating…" : ADVANCE_LABELS[order.status]}
-        </button>
+        <div className="mt-4 flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={() => onAdvance(next)}
+            disabled={isUpdating}
+            className="min-h-12 w-full rounded-lg bg-neutral-900 py-3 text-sm font-semibold text-white disabled:cursor-wait disabled:opacity-60"
+          >
+            {isUpdating ? "Updating…" : order.status === "ready" ? "Mark Picked Up · Cash Received" : ADVANCE_LABELS[order.status]}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (window.confirm(`Cancel ticket for ${order.customer_name}?`)) onCancel();
+            }}
+            disabled={isUpdating}
+            className="min-h-11 w-full rounded-lg border border-red-200 py-2 text-sm font-semibold text-red-700 disabled:cursor-wait disabled:opacity-60"
+          >
+            Cancel order
+          </button>
+        </div>
       )}
     </div>
   );

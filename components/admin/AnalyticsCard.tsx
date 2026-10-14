@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getOwnerDayOrders, getOwnerKitchenRealtimeTopic } from "@/lib/actions/private-orders";
+import {
+  getOwnerActiveTickets,
+  getOwnerCashCollectedToday,
+  getOwnerDayOrders,
+  getOwnerKitchenRealtimeTopic,
+} from "@/lib/actions/private-orders";
 import { createClient } from "@/lib/supabase/client";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import type { OrderWithItems } from "@/lib/types/database";
+import type { CashCollection, OrderWithItems } from "@/lib/types/database";
 
 const chuukTime = new Intl.DateTimeFormat("en-US", {
   timeZone: "Pacific/Pohnpei",
@@ -12,15 +17,29 @@ const chuukTime = new Intl.DateTimeFormat("en-US", {
   timeStyle: "short",
 });
 
-export function AnalyticsCard({ initialOrders }: { initialOrders: OrderWithItems[] }) {
+export function AnalyticsCard({ initialOrders, initialCashCollections, initialActiveOrders }: {
+  initialOrders: OrderWithItems[];
+  initialCashCollections: CashCollection[];
+  initialActiveOrders: OrderWithItems[];
+}) {
   const [orders, setOrders] = useState(initialOrders);
+  const [cashCollections, setCashCollections] = useState(initialCashCollections);
+  const [activeOrders, setActiveOrders] = useState(initialActiveOrders);
 
   useEffect(() => {
     let active = true;
     const refresh = async () => {
       try {
-        const next = await getOwnerDayOrders();
-        if (active) setOrders(next);
+        const [nextOrders, nextCashCollections, nextActiveOrders] = await Promise.all([
+          getOwnerDayOrders(),
+          getOwnerCashCollectedToday(),
+          getOwnerActiveTickets(),
+        ]);
+        if (active) {
+          setOrders(nextOrders);
+          setCashCollections(nextCashCollections);
+          setActiveOrders(nextActiveOrders);
+        }
       } catch {
         // Keep the last known totals when temporarily offline.
       }
@@ -51,29 +70,30 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: OrderWithItems
     };
   }, []);
 
-  const { revenueToday, completedToday, activeTickets, orderCount } = useMemo(() => {
-    let revenue = 0;
-    let completed = 0;
-    let active = 0;
+  const { cashCollected, completedToday, cancelledToday, orderCount } = useMemo(() => {
+    let cancelled = 0;
     for (const order of orders) {
-      if (order.status === "completed") {
-        revenue += Number(order.total);
-        completed += 1;
-      } else if (order.status === "pending" || order.status === "cooking" || order.status === "ready") {
-        active += 1;
+      if (order.status === "cancelled") {
+        cancelled += 1;
       }
     }
-    return { revenueToday: revenue, completedToday: completed, activeTickets: active, orderCount: orders.length };
-  }, [orders]);
+    return {
+      cashCollected: cashCollections.reduce((sum, collection) => sum + Number(collection.total), 0),
+      completedToday: cashCollections.length,
+      cancelledToday: cancelled,
+      orderCount: orders.length,
+    };
+  }, [orders, cashCollections]);
+  const activeTickets = activeOrders.length;
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
         <p className="text-2xl font-bold">{orderCount}</p>
         <p className="text-xs text-neutral-500">Orders today</p>
       </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
-        <p className="text-2xl font-bold">${revenueToday.toFixed(2)}</p>
+        <p className="text-2xl font-bold">${cashCollected.toFixed(2)}</p>
         <p className="text-xs text-neutral-500">Cash collected</p>
       </div>
       <div className="rounded-xl bg-white p-3 text-center shadow-sm">
@@ -84,10 +104,14 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: OrderWithItems
         <p className="text-2xl font-bold">{activeTickets}</p>
         <p className="text-xs text-neutral-500">Active tickets</p>
       </div>
-      <p className="col-span-2 -mt-1 text-center text-xs text-neutral-500 sm:col-span-4">
-        Cash collected includes completed pickups only.
+      <div className="rounded-xl bg-white p-3 text-center shadow-sm">
+        <p className="text-2xl font-bold">{cancelledToday}</p>
+        <p className="text-xs text-neutral-500">Canceled orders</p>
+      </div>
+      <p className="col-span-2 -mt-1 text-center text-xs text-neutral-500 md:col-span-3 lg:col-span-5">
+        Cash collected includes completed pickups with a recorded collection time.
       </p>
-      <section aria-labelledby="today-orders-title" className="col-span-2 mt-2 sm:col-span-4">
+      <section aria-labelledby="today-orders-title" className="col-span-2 mt-2 md:col-span-3 lg:col-span-5">
         <div className="mb-3 flex items-center justify-between">
           <h2 id="today-orders-title" className="text-lg font-semibold text-ink-900">Today&apos;s orders</h2>
           <span className="text-sm text-ink-500">{orders.length}</span>
@@ -132,6 +156,11 @@ export function AnalyticsCard({ initialOrders }: { initialOrders: OrderWithItems
                     <p className="mt-3 border-t border-sand-100 pt-2 text-right text-sm font-semibold text-ink-900">
                       Order total · ${Number(order.total).toFixed(2)}
                     </p>
+                    {order.cash_collected_at ? (
+                      <p className="mt-1 text-right text-xs font-medium text-green-800">
+                        Cash collected {chuukTime.format(new Date(order.cash_collected_at))}
+                      </p>
+                    ) : null}
                   </div>
                 </details>
               </li>

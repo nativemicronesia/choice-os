@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils/cn";
 import type { OrderStatus, OrderWithItems } from "@/lib/types/database";
 
 const STEPS: OrderStatus[] = ["pending", "cooking", "ready", "completed"];
+const VALID_STATUSES: OrderStatus[] = [...STEPS, "cancelled"];
 const STEP_LABELS: Record<OrderStatus, string> = {
   pending: "Received",
   cooking: "Cooking",
   ready: "Ready for pickup",
   completed: "Picked up",
+  cancelled: "Cancelled",
 };
 
 export function OrderStatusTracker({
@@ -41,7 +43,7 @@ export function OrderStatusTracker({
       ?.channel(realtimeTopic, { config: { private: true } })
       .on("broadcast", { event: "choice_order_status" }, ({ payload }) => {
         const next = payload as { status?: OrderStatus; updated_at?: string };
-        if (!next.status || !STEPS.includes(next.status) || !next.updated_at) return;
+        if (!next.status || !VALID_STATUSES.includes(next.status) || !next.updated_at) return;
         setOrder((prev) => ({ ...prev, status: next.status!, updated_at: next.updated_at! }));
       })
       .subscribe();
@@ -57,7 +59,8 @@ export function OrderStatusTracker({
     };
   }, [initialOrder.id, realtimeTopic]);
 
-  const currentIndex = STEPS.indexOf(order.status);
+  const isCancelled = order.status === "cancelled";
+  const currentIndex = isCancelled ? -1 : STEPS.indexOf(order.status);
 
   return (
     <div>
@@ -69,6 +72,11 @@ export function OrderStatusTracker({
         <span aria-live="polite" aria-atomic="true"><StatusBadge status={order.status} /></span>
       </div>
 
+      {isCancelled ? (
+        <p role="status" className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-800">
+          This pickup order was cancelled. Contact Choice if you have questions.
+        </p>
+      ) : null}
       <ol className="mt-6 flex flex-col gap-3">
         {STEPS.map((step, index) => (
           <li key={step} className="flex items-center gap-3">

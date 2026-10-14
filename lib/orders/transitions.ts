@@ -8,7 +8,14 @@ export const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus | null> = {
   cooking: "ready",
   ready: "completed",
   completed: null,
+  cancelled: null,
 };
+
+export const CANCELLABLE_STATUSES: readonly OrderStatus[] = ["pending", "cooking", "ready"];
+
+export function isAllowedOrderTransition(current: OrderStatus, next: OrderStatus): boolean {
+  return ALLOWED_TRANSITIONS[current] === next || (next === "cancelled" && CANCELLABLE_STATUSES.includes(current));
+}
 
 export function nextStatus(current: OrderStatus): OrderStatus | null {
   return ALLOWED_TRANSITIONS[current];

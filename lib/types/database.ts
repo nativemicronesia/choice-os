@@ -1,4 +1,4 @@
-export type OrderStatus = "pending" | "cooking" | "ready" | "completed";
+export type OrderStatus = "pending" | "cooking" | "ready" | "completed" | "cancelled";
 
 export type MenuItem = {
   id: string;
@@ -30,7 +30,10 @@ export type Order = {
   total: number;
   created_at: string;
   updated_at: string;
+  cash_collected_at: string | null;
 };
+
+export type CashCollection = Pick<Order, "id" | "total" | "cash_collected_at">;
 
 export type OrderItem = {
   id: string;

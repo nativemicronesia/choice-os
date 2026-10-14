@@ -155,7 +155,10 @@ async function main() {
     await subscribe(trackingChannel);
 
     for (const status of statuses.slice(1)) {
-      const { error } = await admin.from("orders").update({ status }).eq("id", orderId);
+      const orderUpdate = status === "completed"
+        ? { status, cash_collected_at: new Date().toISOString() }
+        : { status };
+      const { error } = await admin.from("orders").update(orderUpdate).eq("id", orderId);
       check(!error, `Unable to simulate owner status ${status}: ${error?.message}`);
       const update = await waitForPayload(trackingEvents, (event) => event.status === status);
       check(typeof update.updated_at === "string", `Realtime status ${status} omitted its update timestamp`);

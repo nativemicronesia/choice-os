@@ -2,7 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireOwnerSession } from "@/lib/auth/require";
-import { ALLOWED_TRANSITIONS } from "@/lib/orders/transitions";
+import { isAllowedOrderTransition } from "@/lib/orders/transitions";
 import type { OrderStatus } from "@/lib/types/database";
 import { fixtureAdvanceOrder, isChoiceFixtureMode } from "@/lib/dev/choice-fixtures";
 
@@ -12,7 +12,7 @@ export async function updateOrderStatus(
   nextStatus: OrderStatus,
 ): Promise<{ success: true } | { success: false; error: string }> {
   await requireOwnerSession();
-  if (ALLOWED_TRANSITIONS[expectedCurrentStatus] !== nextStatus) {
+  if (!isAllowedOrderTransition(expectedCurrentStatus, nextStatus)) {
     return { success: false, error: `Illegal transition ${expectedCurrentStatus} -> ${nextStatus}` };
   }
 
@@ -22,16 +22,20 @@ export async function updateOrderStatus(
       : { success: false, error: "Ticket already updated elsewhere" };
   }
 
-  const { data, error } = await createAdminClient()
+  const update = nextStatus === "completed"
+    ? { status: nextStatus, cash_collected_at: new Date().toISOString() }
+    : { status: nextStatus };
+  let query = createAdminClient()
     .from("orders")
-    .update({ status: nextStatus })
+    .update(update)
     .eq("id", orderId)
-    .eq("status", expectedCurrentStatus)
-    .select("id");
+    .eq("status", expectedCurrentStatus);
+  if (nextStatus === "completed") query = query.is("cash_collected_at", null);
+  const { data, error } = await query.select("id");
 
   if (error) return { success: false, error: error.message };
   if (!data || data.length === 0) {
-    return { success: false, error: "Ticket already updated elsewhere" };
+    return { success: false, error: "Ticket already changed, picked up, or cash was already recorded" };
   }
   return { success: true };
 }

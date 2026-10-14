@@ -43,7 +43,13 @@ tickets, and an expandable list of today's orders with Chuuk-local timestamps,
 line quantities, instructions, prices, and status. The Kitchen screen keeps New,
 Preparing, and Ready for Pickup tickets in separate lanes and refreshes fixture
 state every two seconds; status buttons move tickets immediately in the shared
-fixture store.
+fixture store. Canceling a ticket removes it from the active lanes and customer
+tracking shows the canceled status. Completing a ready cash pickup records one
+collection timestamp; canceled and in-progress orders do not count as collected
+cash, and a completed order cannot be completed or collected again.
+The owner day view counts open tickets across all order dates, today's order
+activity by Chuuk-local placement date, and collected cash by Chuuk-local
+collection date.
 
 The fixture store validates item availability, special activation and Chuuk-day
 schedule, quantities, and instructions. It copies each menu or special name and

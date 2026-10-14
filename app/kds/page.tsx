@@ -103,7 +103,7 @@ export default function KdsPage() {
       // Refresh immediately in fixture mode and reconcile races between tablets.
       const fresh = await getOwnerTicket(orderId);
       setTickets((prev) => {
-        if (!fresh || fresh.status === "completed") return removeKey(prev, orderId);
+        if (!fresh || fresh.status === "completed" || fresh.status === "cancelled") return removeKey(prev, orderId);
         const { order_items, ...order } = fresh;
         return { ...prev, [orderId]: { order, items: order_items } };
       });

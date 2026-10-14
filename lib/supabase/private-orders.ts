@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import {
   fixtureMenu,
   fixtureOwnerActiveOrders,
+  fixtureOwnerCashCollected,
   fixtureOwnerOrder,
   fixtureOwnerOrders,
   fixtureSpecials,
@@ -13,7 +14,7 @@ import {
   fixtureTrackedOrderStatus,
   isChoiceFixtureMode,
 } from "@/lib/dev/choice-fixtures";
-import type { Order, OrderItem, OrderWithItems } from "@/lib/types/database";
+import type { CashCollection, Order, OrderItem, OrderWithItems } from "@/lib/types/database";
 
 const TRACKING_COOKIE = "choice_order_access";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -108,6 +109,19 @@ export async function getOwnerTodaysOrders(start: string, end: string): Promise<
     .order("created_at", { ascending: false });
   if (error) throw error;
   return ((data ?? []) as OrderWithItems[]).map(orderFromRow);
+}
+
+export async function getOwnerCashCollected(start: string, end: string): Promise<CashCollection[]> {
+  if (isChoiceFixtureMode()) return fixtureOwnerCashCollected(start, end);
+  const { data, error } = await createAdminClient()
+    .from("orders")
+    .select("id,total,cash_collected_at")
+    .eq("status", "completed")
+    .gte("cash_collected_at", start)
+    .lt("cash_collected_at", end)
+    .order("cash_collected_at", { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as CashCollection[]).map((row) => ({ ...row, total: Number(row.total) }));
 }
 
 export async function getOwnerMenuItems() {

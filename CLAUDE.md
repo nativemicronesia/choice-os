@@ -13,7 +13,7 @@
 - RLS: every table has RLS enabled. The anon key may read menu items and daily
   specials only. It cannot read or write `orders`/`order_items`. Never restore
   public order reads for tracking or the kitchen.
-- Checkout posts only menu-item IDs, quantities, a customer name, and optional
+- Checkout posts only menu-item or scheduled-special IDs, quantities, a customer name, and optional
   instructions to `/api/orders`. The server calls `place_pickup_order`, which
   checks availability, copies current names/prices, calculates the total, and
   inserts the order plus all items in one transaction. Do not accept prices or
@@ -22,8 +22,10 @@
   scoped to its order URL; only a SHA-256 hash is stored. Tracker reads must
   verify the capability server-side. Owner reads use the service-role client
   only after `requireOwnerSession()`.
-- `orders.status` transitions: `pending -> cooking -> ready -> completed` only,
-  enforced by the CHECK constraint. Any new status value needs a migration.
+- `orders.status` transitions: `pending -> cooking -> ready -> completed`, or
+  cancellation from `pending`, `cooking`, or `ready`. Server Actions compare the
+  expected current status to prevent duplicate/racing updates; any new status
+  value needs a migration. Completion records `cash_collected_at` exactly once.
 - Realtime: `orders` remains in the `supabase_realtime` publication, but
   browser clients must never subscribe directly to order row changes. KDS and
   owner analytics use private Broadcast topics disclosed only after the owner

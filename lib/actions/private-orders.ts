@@ -3,6 +3,7 @@
 import { requireOwnerSession } from "@/lib/auth/require";
 import {
   getOwnerActiveOrders,
+  getOwnerCashCollected,
   getOwnerDailySpecials,
   getOwnerKitchenTopic,
   getOwnerMenuItems,
@@ -30,6 +31,12 @@ export async function getOwnerDayOrders() {
   await requireOwnerSession();
   const { startUtc, endUtc } = chuukTodayRangeUtc();
   return getOwnerTodaysOrders(startUtc.toISOString(), endUtc.toISOString());
+}
+
+export async function getOwnerCashCollectedToday() {
+  await requireOwnerSession();
+  const { startUtc, endUtc } = chuukTodayRangeUtc();
+  return getOwnerCashCollected(startUtc.toISOString(), endUtc.toISOString());
 }
 
 export async function getOwnerActiveTickets() {

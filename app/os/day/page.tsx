@@ -1,4 +1,9 @@
-import { getOwnerDayOrders, getOwnerSpecials } from "@/lib/actions/private-orders";
+import {
+  getOwnerActiveTickets,
+  getOwnerCashCollectedToday,
+  getOwnerDayOrders,
+  getOwnerSpecials,
+} from "@/lib/actions/private-orders";
 import { AnalyticsCard } from "@/components/admin/AnalyticsCard";
 import { SpecialsList } from "@/components/admin/SpecialsList";
 import { OsShell } from "@/components/os/OsShell";
@@ -6,15 +11,21 @@ import { OsShell } from "@/components/os/OsShell";
 export const dynamic = "force-dynamic";
 
 export default async function OsDayPage() {
-  const [specials, todaysOrders] = await Promise.all([
+  const [specials, todaysOrders, todaysCollections, activeTickets] = await Promise.all([
     getOwnerSpecials(),
     getOwnerDayOrders(),
+    getOwnerCashCollectedToday(),
+    getOwnerActiveTickets(),
   ]);
 
   return (
     <OsShell title="Day" subtitle="Sales, order activity, and specials" active="day">
       <section>
-        <AnalyticsCard initialOrders={todaysOrders} />
+          <AnalyticsCard
+            initialOrders={todaysOrders}
+            initialCashCollections={todaysCollections}
+            initialActiveOrders={activeTickets}
+          />
       </section>
 
       <section className="mt-8">

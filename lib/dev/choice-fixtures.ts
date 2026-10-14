@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
-import { ALLOWED_TRANSITIONS } from "@/lib/orders/transitions";
+import { isAllowedOrderTransition } from "@/lib/orders/transitions";
 import { chuukWeekday, isSpecialScheduledForWeekday } from "@/lib/specials/schedule";
 import type {
+  CashCollection,
   DailySpecial,
   MenuItem,
   Order,
@@ -142,6 +143,9 @@ export function fixturePlaceOrder(input: {
     throw new Error("Duplicate order lines are not allowed");
   }
 
+  const transactionTime = input.now ?? new Date();
+  const weekday = chuukWeekday(transactionTime);
+
   // Resolve and snapshot every line before mutating state, matching the SQL RPC's
   // all-or-nothing behavior and never trusting a client-supplied price or total.
   const lines = input.items.map((line) => {
@@ -151,7 +155,6 @@ export function fixturePlaceOrder(input: {
     if (line.special_instructions && line.special_instructions.length > 250) {
       throw new Error("Invalid instructions");
     }
-    const weekday = chuukWeekday(input.now);
     const menuItem = line.item_type === "menu"
       ? store.menu.find((row) => row.id === line.item_id && row.is_available)
       : undefined;
@@ -170,7 +173,7 @@ export function fixturePlaceOrder(input: {
     } satisfies OrderItem;
   });
   const id = randomUUID();
-  const now = new Date().toISOString();
+  const now = transactionTime.toISOString();
   const order: FixtureOrder = {
     id,
     customer_name: input.name.trim(),
@@ -178,6 +181,7 @@ export function fixturePlaceOrder(input: {
     total: Number(lines.reduce((sum, line) => sum + line.price_at_time * line.quantity, 0).toFixed(2)),
     created_at: now,
     updated_at: now,
+    cash_collected_at: null,
     trackingTokenHash: input.trackingTokenHash,
     order_items: lines.map((line) => ({ ...line, order_id: id })),
   };
@@ -205,9 +209,16 @@ export function fixtureOwnerOrders(start?: string, end?: string): OrderWithItems
     .sort((a, b) => b.created_at.localeCompare(a.created_at));
 }
 
+export function fixtureOwnerCashCollected(start: string, end: string): CashCollection[] {
+  return state().orders
+    .filter((row) => row.status === "completed" && row.cash_collected_at !== null && row.cash_collected_at >= start && row.cash_collected_at < end)
+    .map(({ id, total, cash_collected_at }) => ({ id, total, cash_collected_at }))
+    .sort((a, b) => (b.cash_collected_at ?? "").localeCompare(a.cash_collected_at ?? ""));
+}
+
 export function fixtureOwnerActiveOrders(): OrderWithItems[] {
   return state().orders
-    .filter((row) => row.status !== "completed")
+    .filter((row) => row.status === "pending" || row.status === "cooking" || row.status === "ready")
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
     .map(({ trackingTokenHash: _token, ...row }) => structuredClone(row));
 }
@@ -219,11 +230,14 @@ export function fixtureOwnerOrder(id: string): OrderWithItems | null {
   return structuredClone(order);
 }
 
-export function fixtureAdvanceOrder(id: string, expected: OrderStatus, next: OrderStatus): boolean {
-  if (ALLOWED_TRANSITIONS[expected] !== next) return false;
+export function fixtureAdvanceOrder(id: string, expected: OrderStatus, next: OrderStatus, now = new Date()): boolean {
+  if (!isAllowedOrderTransition(expected, next)) return false;
   const order = state().orders.find((row) => row.id === id && row.status === expected);
   if (!order) return false;
+  if (next === "completed" && order.cash_collected_at !== null) return false;
+  if (next === "cancelled" && order.cash_collected_at !== null) return false;
   order.status = next;
-  order.updated_at = new Date().toISOString();
+  order.updated_at = now.toISOString();
+  order.cash_collected_at = next === "completed" ? order.updated_at : null;
   return true;
 }

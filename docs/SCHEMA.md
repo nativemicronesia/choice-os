@@ -30,3 +30,11 @@ the same atomic checkout function to accept menu items and currently scheduled
 specials. It snapshots each canonical name and price from the database, and
 rejects unavailable menu items, inactive specials, and weekly specials outside
 their Chuuk weekday schedule. Order and order-item reads remain server-only.
+
+The Phase 5 migration `20261015140000_cancel_orders_and_record_cash.sql` adds
+the `cancelled` order status and a `cash_collected_at` timestamp. A ready pickup
+is completed and marked collected in one conditional update; the server action
+requires the order still be ready and the cash marker still be empty. A database
+trigger prevents changing or recording that marker twice. Previously completed
+cash pickups are backfilled from their completion timestamp. Canceled orders
+retain no cash marker and do not count toward collected-cash totals.

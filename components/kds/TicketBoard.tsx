@@ -40,6 +40,7 @@ export function TicketBoard({
                   items={ticket.items}
                   isUpdating={updatingOrderIds.has(ticket.order.id)}
                   onAdvance={(next) => onAdvance(ticket.order.id, ticket.order.status, next)}
+                  onCancel={() => onAdvance(ticket.order.id, ticket.order.status, "cancelled")}
                 />
               )) : (
                 <p className="rounded-xl border border-dashed border-neutral-300 px-3 py-6 text-center text-sm text-neutral-400">
