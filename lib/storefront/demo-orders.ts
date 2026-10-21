@@ -23,10 +23,11 @@ export type PreviewOrderRecord = PreviewOrderRequest & {
 };
 
 declare global {
-  var __choicePreviewOrders: PreviewOrderRecord[] | undefined;
+  // Typed loosely so the OS-side reader (app/api/os-preview/storefront-orders) can declare the same global.
+  var __choicePreviewOrders: unknown[] | undefined;
 }
 
-const store = () => (globalThis.__choicePreviewOrders ??= []);
+const store = () => (globalThis.__choicePreviewOrders ??= []) as PreviewOrderRecord[];
 
 export function submitPreviewOrder(request: PreviewOrderRequest): PreviewOrderRecord {
   const reference = `DEMO-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
