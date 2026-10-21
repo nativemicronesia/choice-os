@@ -1,0 +1,15 @@
+/* Choice OS preview styles. Uses the shared @theme tokens from globals.css. */
+.ox-display { font-family: var(--font-ox-display), var(--font-inter), ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+
+@keyframes ox-enter { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.ox-enter { animation: ox-enter 160ms ease-out both; }
+
+/* Photo placeholders, matched to the storefront's look. */
+.ox-ph { position: relative; overflow: hidden; display: grid; place-items: center; }
+.ox-ph::before { content: ""; position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%; box-shadow: inset 0 0 0 1px rgb(255 255 255 / .22), 0 0 0 8px rgb(255 255 255 / .07); background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / .16), transparent 60%); }
+.ox-ph-ember { background: linear-gradient(145deg, var(--color-sunset-400), var(--color-sunset-700) 70%, #6b2a06); color: #fff; }
+.ox-ph-char { background: linear-gradient(145deg, #4a3d31, var(--color-ink-900)); color: var(--color-sand-100); }
+.ox-ph-cream { background: linear-gradient(145deg, var(--color-sunset-100), var(--color-sand-300)); color: var(--color-ink-900); }
+.ox-ph-leaf { background: linear-gradient(145deg, var(--color-palm-500), var(--color-palm-700) 75%, #1c3320); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) { .ox-enter { animation: none; } }
