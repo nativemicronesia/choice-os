@@ -20,7 +20,7 @@ export async function toggleMenuItemAvailability(
   if (isChoiceFixtureMode()) {
     if (!fixtureSetMenuAvailability(itemId, isAvailable)) return { success: false, error: "Menu item not found" };
     revalidatePath("/");
-    revalidatePath("/os/menu");
+    revalidatePath("/os/live/menu");
     return { success: true };
   }
   const { error } = await createAdminClient()
@@ -30,7 +30,7 @@ export async function toggleMenuItemAvailability(
 
   if (error) return { success: false, error: error.message };
   revalidatePath("/");
-  revalidatePath("/os/menu");
+  revalidatePath("/os/live/menu");
   return { success: true };
 }
 
@@ -75,7 +75,7 @@ export async function upsertMenuItem(
       is_available: input.is_available,
     });
     revalidatePath("/");
-    revalidatePath("/os/menu");
+    revalidatePath("/os/live/menu");
     return { success: true, id: saved.id };
   }
 
@@ -109,14 +109,14 @@ export async function upsertMenuItem(
     }
 
     revalidatePath("/");
-    revalidatePath("/os/menu");
+    revalidatePath("/os/live/menu");
     return { success: true, id: data.id };
   }
 
   const { data, error } = await admin.from("menu_items").insert(row).select("id").single();
   if (error) return { success: false, error: error.message };
   revalidatePath("/");
-  revalidatePath("/os/menu");
+  revalidatePath("/os/live/menu");
   return { success: true, id: data.id };
 }
 
@@ -128,7 +128,7 @@ export async function deleteMenuItem(
     const deleted = fixtureDeleteMenu(itemId);
     if (!deleted) return { success: false, error: "Menu item not found" };
     revalidatePath("/");
-    revalidatePath("/os/menu");
+    revalidatePath("/os/live/menu");
     return { success: true };
   }
   const admin = createAdminClient();
@@ -147,7 +147,7 @@ export async function deleteMenuItem(
   }
 
   revalidatePath("/");
-  revalidatePath("/os/menu");
+  revalidatePath("/os/live/menu");
   return { success: true };
 }
 

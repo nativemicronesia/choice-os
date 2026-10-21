@@ -48,7 +48,7 @@ export function OsShell({
         <aside className="border-b border-sand-200 md:w-48 md:shrink-0 md:border-b-0 md:border-r">
           <nav className="flex gap-1 p-3 md:flex-col" aria-label="Owner OS">
             <Link
-              href="/os/menu"
+              href="/os/live/menu"
               className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
                 active === "menu" ? "bg-ocean-700 text-white" : "text-ink-700 hover:bg-sand-100"
               }`}
@@ -66,7 +66,7 @@ export function OsShell({
               Kitchen
             </Link>
             <Link
-              href="/os/day"
+              href="/os/live/day"
               className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold ${
                 active === "day" ? "bg-ocean-700 text-white" : "text-ink-700 hover:bg-sand-100"
               }`}

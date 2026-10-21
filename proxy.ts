@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getSessionCookieName, parseSessionToken } from "@/lib/auth/session";
+import { previewOsEnabled } from "@/lib/auth/preview";
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -9,6 +10,13 @@ export function proxy(request: NextRequest) {
     pathname.startsWith("/kds");
 
   if (!needsOwner) return NextResponse.next();
+
+  // Preview workspace: open, demonstration data only. /os/live (real data) stays gated.
+  const isPreviewOs =
+    (pathname === "/os" || pathname.startsWith("/os/")) &&
+    pathname !== "/os/live" &&
+    !pathname.startsWith("/os/live/");
+  if (isPreviewOs && previewOsEnabled()) return NextResponse.next();
 
   const token = request.cookies.get(getSessionCookieName())?.value;
   try {

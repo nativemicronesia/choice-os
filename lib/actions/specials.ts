@@ -62,7 +62,7 @@ export async function upsertDailySpecial(
       image_url: input.image_url?.trim() || null,
     });
     revalidatePath("/");
-    revalidatePath("/os/day");
+    revalidatePath("/os/live/day");
     return { success: true, id: saved.id };
   }
   const admin = createAdminClient();
@@ -96,14 +96,14 @@ export async function upsertDailySpecial(
     }
 
     revalidatePath("/");
-    revalidatePath("/os/day");
+    revalidatePath("/os/live/day");
     return { success: true, id: data.id };
   }
 
   const { data, error } = await admin.from("daily_specials").insert(row).select("id").single();
   if (error) return { success: false, error: error.message };
   revalidatePath("/");
-  revalidatePath("/os/day");
+  revalidatePath("/os/live/day");
   return { success: true, id: data.id };
 }
 

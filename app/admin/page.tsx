@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function AdminRedirectPage() {
-  redirect("/os/day");
+  redirect("/os/live/day");
 }
